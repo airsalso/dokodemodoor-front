@@ -1,0 +1,116 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String        @id @default(cuid())
+  username  String        @unique
+  password  String
+  role      String        @default("USER") // ADMIN, SECURITY, USER
+  status    String        @default("ACTIVE") // ACTIVE, INACTIVE, DELETED
+  scans     Scan[]
+  settings  UserSettings?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model UserSettings {
+  id                String  @id @default(cuid())
+  userId            String  @unique
+  user              User    @relation(fields: [userId], references: [id])
+
+  // Scan Configs
+  exclusions        String  @default("admin,logout,login")
+  requestDelay      Int     @default(500)
+  timeout           Int     @default(30000)
+
+  // AI Settings
+  llmModel          String  @default("gpt-4o")
+  analysisStrictness String  @default("balanced") // strict, balanced, creative
+  apiKey            String?
+
+  // Notifications
+  webhookUrl        String?
+  emailReports      Boolean @default(false)
+
+  // Data Management
+  autoCleanupDays   Int     @default(0) // 0 means disabled
+
+  // Appearance
+  terminalTheme     String  @default("monokai")
+  accentColor       String  @default("#8b5cf6")
+  terminalFont      String  @default("var(--font-mono), 'JetBrains Mono', 'Fira Code', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace")
+  themeFont         String  @default("var(--font-outfit), var(--font-inter), sans-serif")
+  language          String  @default("en")
+}
+
+model Scan {
+  id              String   @id
+  targetUrl       String
+  sourcePath      String?
+  config          String?
+  status          String   // "running", "completed", "failed"
+  startTime       DateTime @default(now())
+  endTime         DateTime?
+  vulnerabilities Int      @default(0)
+  findings        Vulnerability[]
+  reports         ScanReport[]
+  duration        String?
+  logs            String?  // Full terminal logs stored permanently
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id])
+}
+
+model ScanReport {
+  id        String   @id @default(cuid())
+  scanId    String
+  scan      Scan     @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  filename  String
+  content   String   // Markdown or JSON content
+  type      String   // "md", "json", "txt"
+  createdAt DateTime @default(now())
+}
+
+model Vulnerability {
+  id          String   @id @default(cuid())
+  scanId      String
+  scan        Scan     @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  type        String
+  severity    String   // CRITICAL, HIGH, MEDIUM, LOW, INFO
+  title       String
+  description String?
+  evidence    String?  // Code snippet, URL, etc.
+  details     String?  // Store additional JSON blob as text
+  createdAt   DateTime @default(now())
+}
+
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  repoUrl     String?
+  localPath   String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model RefreshToken {
+  id           String   @id @default(cuid())
+  userId       String
+  token        String   @unique
+  expiresAt    DateTime
+  lastActivity DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+}
