@@ -3,7 +3,7 @@
 import { Navbar } from "@/components/Navbar";
 import { Terminal } from "@/components/Terminal";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, Share2, StopCircle, RefreshCw, AlertTriangle, CheckCircle2, Clock, Loader2, Activity, X, Eraser, Languages, Layout } from "lucide-react";
+import { ChevronLeft, Share2, StopCircle, RefreshCw, AlertTriangle, CheckCircle2, Clock, Loader2, Activity, X, Eraser, Languages, Layout, Globe, Hash } from "lucide-react";
 import { ArchiveViewer } from "@/components/ArchiveViewer";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
@@ -401,10 +401,11 @@ function ScanDetailContent() {
     <div className="min-h-screen flex flex-col bg-background relative overflow-x-hidden">
       <Navbar />
 
-      <main className="flex-1 flex flex-col max-w-[1600px] mx-auto px-6 py-12 w-full gap-8 relative z-10">
+      <main className="flex-1 flex flex-col max-w-[1800px] mx-auto px-10 py-12 w-full gap-10 relative z-10">
         {/* Page Header Area */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div className="flex flex-col gap-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10">
+          {/* Left: Branding & Status */}
+          <div className="flex flex-col gap-6">
             <Link
               href="/scans"
               className="group inline-flex items-center gap-3 px-4 py-2 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-all active:scale-95 w-fit"
@@ -415,208 +416,213 @@ function ScanDetailContent() {
               {t('back to history') || 'Back to History'}
             </Link>
 
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-3">
-                <h1 className="text-4xl font-black tracking-tight">
-                  {(() => {
-                    if (data?.sourcePath) {
-                      const parts = data.sourcePath.replace(/\\/g, '/').split('/');
-                      const reposIdx = parts.lastIndexOf('repos');
-                      return (reposIdx !== -1 && parts.length > reposIdx + 1)
-                        ? parts[reposIdx + 1]
-                        : parts[parts.length - 1];
-                    }
-                    return id;
-                  })()}
-                </h1>
-                <div className="flex items-center gap-2">
-                  <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border ${
-                    data?.status?.toLowerCase() === 'running' ? 'bg-primary/10 text-primary border-primary/20' :
-                    data?.status?.toLowerCase() === 'translating' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' :
-                    data?.status?.toLowerCase() === 'completed' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                    'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                  }`}>
-                    {data?.status?.toLowerCase() === 'running' ? <Clock className="w-3 h-3 animate-pulse" /> :
-                     data?.status?.toLowerCase() === 'translating' ? <Languages className="w-3 h-3 animate-pulse" /> :
-                     data?.status?.toLowerCase() === 'completed' ? <CheckCircle2 className="w-3 h-3" /> :
-                     <AlertTriangle className="w-3 h-3" />}
-                    {t(data?.status || "")}
-                  </div>
-
-                  <button
-                    onClick={handleCopyId}
-                    className="group relative px-4 py-1.5 rounded-xl bg-white/10 border border-white/20 text-xs font-black font-mono text-gray-300 shadow-inner hover:bg-white/20 transition-all active:scale-95"
-                    title="Click to copy ID"
-                  >
-                    {id}
+            <div className="space-y-2">
+              <div className="flex items-center gap-5">
+                <div className={`p-4 rounded-[24px] border shadow-2xl ${
+                  data?.status?.toLowerCase() === 'running' ? 'bg-primary/10 border-primary/20 text-primary' :
+                  data?.status?.toLowerCase() === 'translating' ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400' :
+                  data?.status?.toLowerCase() === 'completed' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
+                  'bg-rose-500/10 border-rose-500/20 text-rose-400'
+                }`}>
+                  {data?.status?.toLowerCase() === 'running' ? <Clock className="w-8 h-8 animate-pulse" /> :
+                   data?.status?.toLowerCase() === 'translating' ? <Languages className="w-8 h-8 animate-pulse" /> :
+                   data?.status?.toLowerCase() === 'completed' ? <CheckCircle2 className="w-8 h-8" /> :
+                   <AlertTriangle className="w-8 h-8" />}
+                </div>
+                <div>
+                  <h1 className="text-5xl font-black tracking-tighter text-white leading-tight mb-1">
+                    {(() => {
+                      if (data?.sourcePath) {
+                        const parts = data.sourcePath.replace(/\\/g, '/').split('/');
+                        const reposIdx = parts.lastIndexOf('repos');
+                        return (reposIdx !== -1 && parts.length > reposIdx + 1)
+                          ? parts[reposIdx + 1]
+                          : parts[parts.length - 1];
+                      }
+                      return id;
+                    })()}
+                  </h1>
+                  <div className="relative flex items-center group/url w-fit">
+                    <button
+                      onClick={handleCopyUrl}
+                      className="text-gray-500 font-mono text-sm tracking-tight hover:text-primary transition-all active:scale-[0.98] text-left cursor-pointer flex items-center gap-2"
+                      title="Click to copy Target URL"
+                    >
+                      <Globe className="w-3.5 h-3.5" />
+                      {data?.target}
+                    </button>
                     <AnimatePresence>
-                      {copiedId && (
+                      {copiedUrl && (
                         <motion.span
-                          initial={{ opacity: 0, scale: 0.8, y: -20 }}
-                          animate={{ opacity: 1, scale: 1, y: -45 }}
+                          initial={{ opacity: 0, scale: 0.8, x: 0 }}
+                          animate={{ opacity: 1, scale: 1, x: 12 }}
                           exit={{ opacity: 0, scale: 0.8 }}
-                          className="absolute left-1/2 -translate-x-1/2 px-3 py-1 bg-emerald-500 text-white text-[9px] font-black rounded-lg shadow-xl shadow-emerald-500/20 whitespace-nowrap"
+                          className="inline-block ml-2 px-2 py-0.5 bg-primary text-white text-[8px] font-black rounded-md shadow-xl shadow-primary/20 whitespace-nowrap"
                         >
                           COPIED!
                         </motion.span>
                       )}
                     </AnimatePresence>
-                  </button>
-                </div>
-
-                {data && (
-                  <div className="flex items-center gap-2 px-5 py-2 rounded-full bg-white/5 border border-white/10 text-xs font-black uppercase tracking-widest text-gray-300 shadow-sm">
-                    <Clock className="w-4 h-4 text-primary" />
-                    <span className="flex items-center gap-1.5">
-                      {t("duration")}:
-                      <span className="text-white">
-                        {(() => {
-                          const isRunning = data.status?.toLowerCase() === 'running' || data.status?.toLowerCase() === 'translating';
-                          if (isRunning && data.startTime) {
-                            return formatDuration(Math.round((Date.now() - data.startTime) / 1000));
-                          }
-                          // Fallback: Use startTime/endTime if duration field is missing
-                          if (data.duration && data.duration !== "...") {
-                            return formatDuration(data.duration);
-                          }
-                          if (data.startTime && data.endTime) {
-                            const diff = Math.round((data.endTime - data.startTime) / 1000);
-                            if (diff > 0) return formatDuration(diff);
-                          }
-                          return "...";
-                        })()}
-                      </span>
-                    </span>
                   </div>
-                )}
+                </div>
               </div>
-              <div className="relative flex items-center group/url w-fit">
-                <button
-                  onClick={handleCopyUrl}
-                  className="text-gray-300 font-mono text-base tracking-tight mt-1 opacity-80 hover:opacity-100 hover:text-primary transition-all active:scale-[0.98] text-left cursor-pointer"
-                  title="Click to copy Target URL"
-                >
-                  {data?.target}
-                </button>
+            </div>
+          </div>
+
+          {/* Right: Metrics & Actions */}
+          <div className="flex flex-col items-end gap-6">
+            <div className="flex items-center gap-3">
+              {data && (
+                <div className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-white/5 border border-white/10 text-xs font-black uppercase tracking-widest text-gray-300 shadow-inner">
+                  <Clock className="w-4 h-4 text-primary" />
+                  <span className="flex items-center gap-2">
+                    {t("duration")}:
+                    <span className="text-white font-mono">
+                      {(() => {
+                        const isRunning = data.status?.toLowerCase() === 'running' || data.status?.toLowerCase() === 'translating';
+                        if (isRunning && data.startTime) {
+                          return formatDuration(Math.round((Date.now() - data.startTime) / 1000));
+                        }
+                        if (data.duration && data.duration !== "...") {
+                          return formatDuration(data.duration);
+                        }
+                        if (data.startTime && data.endTime) {
+                          const diff = Math.round((data.endTime - data.startTime) / 1000);
+                          if (diff > 0) return formatDuration(diff);
+                        }
+                        return "...";
+                      })()}
+                    </span>
+                  </span>
+                </div>
+              )}
+
+              <button
+                onClick={handleCopyId}
+                className="group relative px-5 py-3 rounded-2xl bg-white/5 border border-white/10 text-xs font-black font-mono text-gray-400 shadow-inner hover:bg-white/10 hover:text-white transition-all active:scale-95 flex items-center gap-2"
+                title="Click to copy ID"
+              >
+                <Hash className="w-4 h-4 text-primary/50 group-hover:text-primary transition-colors" />
+                {id}
                 <AnimatePresence>
-                  {copiedUrl && (
+                  {copiedId && (
                     <motion.span
-                      initial={{ opacity: 0, scale: 0.8, x: 0 }}
-                      animate={{ opacity: 1, scale: 1, x: 12 }}
+                      initial={{ opacity: 0, scale: 0.8, y: -20 }}
+                      animate={{ opacity: 1, scale: 1, y: -45 }}
                       exit={{ opacity: 0, scale: 0.8 }}
-                      className="inline-block ml-2 px-3 py-1 bg-primary text-white text-[9px] font-black rounded-lg shadow-xl shadow-primary/20 whitespace-nowrap"
+                      className="absolute left-1/2 -translate-x-1/2 px-3 py-1 bg-emerald-500 text-white text-[9px] font-black rounded-lg shadow-xl shadow-emerald-500/20 whitespace-nowrap"
                     >
                       COPIED!
                     </motion.span>
                   )}
                 </AnimatePresence>
-              </div>
+              </button>
             </div>
-          </div>
 
-          <div className="flex items-center gap-3">
-            {data?.status?.toLowerCase() !== 'running' && data?.status?.toLowerCase() !== 'translating' && (
-              <button
-                onClick={() => setShowArchive(!showArchive)}
-                className={`px-6 py-4 rounded-2xl border transition-all flex items-center gap-2 font-black ${
-                  showArchive
-                    ? "bg-primary text-white border-primary glow-primary"
-                    : "bg-white/5 border-white/10 text-gray-300 hover:bg-white/10"
-                }`}
-              >
-                <Layout className="w-5 h-5" />
-                {showArchive ? (isKo ? "로그 보기" : "VIEW LOGS") : (isKo ? "결과 보관함" : "VIEW ARCHIVE")}
-              </button>
-            )}
-
-            <button
-              onClick={fetchStatus}
-              className="px-6 py-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all flex items-center gap-2 font-black text-gray-300"
-            >
-              <Activity className="w-5 h-5 text-primary" />
-              STATUS
-            </button>
-
-            <button
-              onClick={handleCleanup}
-              disabled={cleaning || data?.status?.toLowerCase() !== 'failed'}
-              className={`px-6 py-4 rounded-2xl border transition-all flex items-center gap-2 font-black ${
-                (cleaning || data?.status?.toLowerCase() !== 'failed')
-                  ? "bg-white/5 border-white/10 text-gray-500 opacity-30 cursor-not-allowed"
-                  : "bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:border-amber-500/30"
-              }`}
-              title={data?.status?.toLowerCase() !== 'failed' ? "Only failed scans can be cleaned up" : "Cleanup session files"}
-            >
-              {cleaning ? (
-                <RefreshCw className="w-5 h-5 animate-spin text-amber-500" />
-              ) : (
-                <Eraser className={`w-5 h-5 ${data?.status?.toLowerCase() === 'failed' ? 'text-amber-500' : 'text-gray-500'}`} />
+            <div className="flex items-center gap-3">
+              {data?.status?.toLowerCase() !== 'running' && data?.status?.toLowerCase() !== 'translating' && (
+                <button
+                  onClick={() => setShowArchive(!showArchive)}
+                  className={`px-6 py-4 rounded-2xl border transition-all flex items-center gap-3 font-black text-sm tracking-tight ${
+                    showArchive
+                      ? "bg-primary text-white border-primary glow-primary"
+                      : "bg-white/5 border-white/10 text-gray-300 hover:bg-white/10"
+                  }`}
+                >
+                  <Layout className="w-5 h-5" />
+                  {showArchive ? (isKo ? "로그 보기" : "VIEW LOGS") : (isKo ? "결과 보관함" : "VIEW ARCHIVE")}
+                </button>
               )}
-              CLEANUP
-            </button>
 
-            {data?.status?.toLowerCase() === "running" ? (
               <button
-                disabled={stopping}
-                onClick={handleStop}
-                className={`flex items-center gap-2 px-8 py-4 rounded-2xl bg-rose-500/10 text-rose-500 border border-rose-500/20 hover:bg-rose-500/20 transition-all font-black ${
-                  stopping ? "opacity-50 cursor-not-allowed" : ""
-                }`}
+                onClick={fetchStatus}
+                className="px-6 py-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all flex items-center gap-3 font-black text-sm tracking-tight text-gray-300"
               >
-                {stopping ? (
-                  <RefreshCw className="w-5 h-5 animate-spin" />
-                ) : (
-                  <StopCircle className="w-5 h-5" />
-                )}
-                {stopping ? "STOPPING..." : "Stop Scan"}
+                <Activity className="w-5 h-5 text-primary" />
+                STATUS
               </button>
-            ) : (
-              <button
-                disabled={restarting || translating || data?.status?.toLowerCase() === 'translating'}
-                onClick={handleRestart}
-                className={`flex items-center gap-2 px-8 py-4 rounded-2xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all font-black ${
-                  (restarting || translating || data?.status?.toLowerCase() === 'translating') ? "opacity-50 cursor-not-allowed" : ""
-                }`}
-              >
-                {restarting ? (
-                  <RefreshCw className="w-5 h-5 animate-spin" />
-                ) : (
-                  <RefreshCw className="w-5 h-5" />
-                )}
-                {restarting ? "RESTARTING..." : "Restart Scan"}
-              </button>
-            )}
 
-            <button
-              onClick={handleShare}
-              className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all flex items-center gap-2 group relative"
-            >
-              <Share2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
-              <AnimatePresence>
-                {copied && (
-                  <motion.span
-                    initial={{ opacity: 0, y: 10, scale: 0.8 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    className="absolute -top-12 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-primary text-white text-[10px] font-bold rounded-lg shadow-2xl"
-                  >
-                    COPIED
-                  </motion.span>
+              <button
+                onClick={handleCleanup}
+                disabled={cleaning || data?.status?.toLowerCase() !== 'failed'}
+                className={`px-6 py-4 rounded-2xl border transition-all flex items-center gap-3 font-black text-sm tracking-tight ${
+                  (cleaning || data?.status?.toLowerCase() !== 'failed')
+                    ? "bg-white/5 border-white/10 text-gray-500 opacity-30 cursor-not-allowed"
+                    : "bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:border-amber-500/30"
+                }`}
+                title={data?.status?.toLowerCase() !== 'failed' ? "Only failed scans can be cleaned up" : "Cleanup session files"}
+              >
+                {cleaning ? (
+                  <RefreshCw className="w-5 h-5 animate-spin text-amber-500" />
+                ) : (
+                  <Eraser className={`w-5 h-5 ${data?.status?.toLowerCase() === 'failed' ? 'text-amber-500' : 'text-gray-500'}`} />
                 )}
-              </AnimatePresence>
-            </button>
+                CLEANUP
+              </button>
+
+              {data?.status?.toLowerCase() === "running" ? (
+                <button
+                  disabled={stopping}
+                  onClick={handleStop}
+                  className={`flex items-center gap-3 px-8 py-4 rounded-2xl bg-rose-500/10 text-rose-500 border border-rose-500/20 hover:bg-rose-500/20 transition-all font-black text-sm tracking-tight ${
+                    stopping ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                >
+                  {stopping ? (
+                    <RefreshCw className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <StopCircle className="w-5 h-5" />
+                  )}
+                  {stopping ? "STOPPING..." : "Stop Scan"}
+                </button>
+              ) : (
+                <button
+                  disabled={restarting || translating || data?.status?.toLowerCase() === 'translating'}
+                  onClick={handleRestart}
+                  className={`flex items-center gap-3 px-8 py-4 rounded-2xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all font-black text-sm tracking-tight ${
+                    (restarting || translating || data?.status?.toLowerCase() === 'translating') ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                >
+                  {restarting || translating ? (
+                    <RefreshCw className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-5 h-5" />
+                  )}
+                  {restarting || translating ? "PREPARING..." : "Restart Scan"}
+                </button>
+              )}
+
+              <button
+                onClick={handleShare}
+                className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-gray-400 hover:text-white active:scale-95 group relative"
+              >
+                <Share2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                <AnimatePresence>
+                  {copied && (
+                    <motion.span
+                      initial={{ opacity: 0, y: 10, scale: 0.8 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      className="absolute -top-12 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-primary text-white text-[10px] font-bold rounded-lg shadow-2xl"
+                    >
+                      COPIED
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Terminal Container */}
         <div
-          className={`flex-1 flex flex-col rounded-3xl overflow-hidden shadow-2xl border transition-all duration-500 min-h-0 ${
+          className={`flex-1 flex flex-col rounded-[32px] overflow-hidden shadow-2xl border transition-all duration-500 min-h-0 ${
             isBright ? 'border-gray-200 bg-white shadow-gray-200/50' : 'border-white/5 bg-[#05070a]'
           }`}
         >
-          {/* Terminal Header Bar - High Contrast Separation */}
+          {/* Terminal Header Bar */}
           <div
-            className={`flex items-center justify-between px-6 py-4 border-b transition-all duration-500 ${
+            className={`flex items-center justify-between px-8 py-5 border-b transition-all duration-500 ${
               terminalTheme === 'beige'
                 ? 'bg-[#eee8d5] border-[#d5ceba]'
                 : isBright
@@ -626,27 +632,27 @@ function ScanDetailContent() {
           >
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 px-1">
-                <div className="w-3 h-3 rounded-full bg-[#ff5f56] shadow-sm" />
-                <div className="w-3 h-3 rounded-full bg-[#ffbd2e] shadow-sm" />
-                <div className="w-3 h-3 rounded-full bg-[#27c93f] shadow-sm" />
+                <div className="w-3.5 h-3.5 rounded-full bg-[#ff5f56] shadow-inner" />
+                <div className="w-3.5 h-3.5 rounded-full bg-[#ffbd2e] shadow-inner" />
+                <div className="w-3.5 h-3.5 rounded-full bg-[#27c93f] shadow-inner" />
               </div>
-              <div className={`h-4 w-[1px] mx-2 ${
+              <div className={`h-5 w-[1px] mx-2 ${
                 terminalTheme === 'beige' ? 'bg-[#d5ceba]' : isBright ? 'bg-gray-300' : 'bg-white/10'
               }`} />
-              <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${
+              <span className={`text-[11px] font-black uppercase tracking-[0.25em] ${
                 terminalTheme === 'beige' ? 'text-[#839496]' : isBright ? 'text-slate-600' : 'text-gray-400'
               }`}>
                 LIVE TERMINAL STREAM
               </span>
             </div>
-            <div className={`text-[10px] font-black px-4 py-1.5 rounded-full border shadow-sm ${
+            <div className={`text-[11px] font-black px-5 py-2 rounded-full border shadow-sm ${
               terminalTheme === 'beige'
                 ? 'bg-[#fdf6e3] border-[#d5ceba] text-[#586e75]'
                 : isBright
                   ? 'bg-white border-gray-200 text-slate-800'
                   : 'bg-white/5 border-white/10 text-gray-300'
             }`}>
-              <span className="text-primary mr-1.5">{data?.logs.length || 0}</span> {isKo ? "로그 라인" : "LINES"}
+              <span className="text-primary mr-2">{data?.logs.length || 0}</span> {isKo ? "로그 라인" : "LINES"}
             </div>
           </div>
 

@@ -379,12 +379,19 @@ export default function ProjectsPage() {
             {/* Registration Modal */}
             <AnimatePresence>
                 {showAddModal && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-xl">
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowAddModal(false)}
+                            className="absolute inset-0 bg-black/80 backdrop-blur-xl cursor-pointer"
+                        />
                         <motion.div
                             initial={{ opacity: 0, scale: 0.9, y: 30 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: 30 }}
-                            className="w-full max-w-xl glass-card relative bg-[#0a0c14] border-primary/20 shadow-2xl overflow-hidden"
+                            className="w-full max-w-xl glass-card relative bg-[#0a0c14] border-primary/20 shadow-2xl overflow-hidden z-10"
                         >
                             {/* Decorative background element */}
                             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
@@ -402,23 +409,57 @@ export default function ProjectsPage() {
                                 <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-white/5 rounded-xl transition-colors text-gray-500 hover:text-white"><X /></button>
                             </div>
 
-                            <div className="px-8 pt-6 flex gap-2">
-                                <button
-                                    onClick={() => setRegistrationMode('git')}
-                                    className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-                                        registrationMode === 'git' ? "bg-primary text-white" : "bg-white/5 text-gray-500 hover:text-white"
-                                    }`}
-                                >
-                                    {t("git_clone")}
-                                </button>
-                                <button
-                                    onClick={() => setRegistrationMode('manual')}
-                                    className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-                                        registrationMode === 'manual' ? "bg-primary text-white" : "bg-white/5 text-gray-500 hover:text-white"
-                                    }`}
-                                >
-                                    {t("manual_registration")}
-                                </button>
+                            <div className="px-8 pt-6">
+                                <div className="flex p-1.5 bg-black/40 rounded-[20px] border border-white/5 gap-1.5 font-sans">
+                                    <button
+                                        type="button"
+                                        onClick={() => setRegistrationMode('git')}
+                                        className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-2xl transition-all duration-500 group relative overflow-hidden ${
+                                            registrationMode === 'git'
+                                                ? "bg-primary text-white shadow-2xl shadow-primary/40 scale-[1.02]"
+                                                : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
+                                        }`}
+                                    >
+                                        <div className={`transition-all duration-500 ${registrationMode === 'git' ? 'scale-110 text-white' : 'group-hover:scale-110 text-[#86efac]'}`}>
+                                            <Github className="w-5 h-5" />
+                                        </div>
+                                        <span className={`text-[14px] font-black uppercase tracking-[0.2em] transition-colors duration-500 ${registrationMode === 'git' ? 'text-white' : 'text-gray-500 group-hover:text-gray-300'}`}>
+                                            {t("git_clone")}
+                                        </span>
+                                        {registrationMode === 'git' && (
+                                            <motion.div
+                                                initial={{ x: '-100%', opacity: 0 }}
+                                                animate={{ x: '100%', opacity: 1 }}
+                                                className="absolute inset-0 bg-gradient-to-r from-primary/0 via-white/10 to-primary/0"
+                                                transition={{ x: { duration: 1.5, repeat: Infinity, ease: "linear" }, opacity: { duration: 0.3 } }}
+                                            />
+                                        )}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setRegistrationMode('manual')}
+                                        className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-2xl transition-all duration-500 group relative overflow-hidden ${
+                                            registrationMode === 'manual'
+                                                ? "bg-primary text-white shadow-2xl shadow-primary/40 scale-[1.02]"
+                                                : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
+                                        }`}
+                                    >
+                                        <div className={`transition-all duration-500 ${registrationMode === 'manual' ? 'scale-110 text-white' : 'group-hover:scale-110 text-[#93c5fd]'}`}>
+                                            <Briefcase className="w-5 h-5" />
+                                        </div>
+                                        <span className={`text-[14px] font-black uppercase tracking-[0.2em] transition-colors duration-500 ${registrationMode === 'manual' ? 'text-white' : 'text-gray-500 group-hover:text-gray-300'}`}>
+                                            {t("manual_registration")}
+                                        </span>
+                                        {registrationMode === 'manual' && (
+                                            <motion.div
+                                                initial={{ x: '-100%', opacity: 0 }}
+                                                animate={{ x: '100%', opacity: 1 }}
+                                                className="absolute inset-0 bg-gradient-to-r from-primary/0 via-white/10 to-primary/0"
+                                                transition={{ x: { duration: 1.5, repeat: Infinity, ease: "linear" }, opacity: { duration: 0.3 } }}
+                                            />
+                                        )}
+                                    </button>
+                                </div>
                             </div>
 
                             <form onSubmit={handleAddProject} className="p-8 space-y-6">
@@ -505,12 +546,19 @@ export default function ProjectsPage() {
             {/* Edit Modal */}
             <AnimatePresence>
                 {showEditModal && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-xl">
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowEditModal(false)}
+                            className="absolute inset-0 bg-black/80 backdrop-blur-xl cursor-pointer"
+                        />
                         <motion.div
                             initial={{ opacity: 0, scale: 0.9, y: 30 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: 30 }}
-                            className="w-full max-w-xl glass-card relative bg-[#0a0c14] border-primary/20 shadow-2xl overflow-hidden"
+                            className="w-full max-w-xl glass-card relative bg-[#0a0c14] border-primary/20 shadow-2xl overflow-hidden z-10"
                         >
                              <div className="p-8 border-b border-white/5 flex items-center justify-between">
                                 <div className="flex items-center gap-3">

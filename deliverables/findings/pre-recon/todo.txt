@@ -1,0 +1,8 @@
+[ ] Route & Endpoint Mapper
+[ ] Authentication & Session Flow Tracer
+[ ] Authorization & Ownership Architecture Mapper
+[ ] Input Vector & Validation Analyzer
+[ ] Injection Source Tracer (non-exploit)
+[ ] Workflow & State Machine Analyzer
+[ ] Use Playwright to discover client-side routes and hidden UI
+[ ] Final Synthesis & Report
