@@ -39,9 +39,9 @@ interface LogNode {
 }
 
 type MarkdownCodeProps = {
-  inline?: boolean;
   className?: string;
   children?: React.ReactNode;
+  node?: any;
 } & React.HTMLAttributes<HTMLElement>;
 
 const syntaxTheme = oneLight as unknown as { [key: string]: CSSProperties };
@@ -221,16 +221,24 @@ const ReportViewer = ({
   }
 
   if (ext === 'md') {
+    if (isTooLarge) {
+      return (
+        <pre className="flex-1 overflow-auto p-6 font-mono text-sm text-gray-900 bg-[#fdfcf6] custom-scrollbar whitespace-pre-wrap break-all min-h-0 min-w-0 max-w-full">
+          <code className="whitespace-pre-wrap break-all">{content}</code>
+        </pre>
+      );
+    }
     return (
       <div className="flex-1 overflow-auto p-8 max-w-full min-w-0 custom-scrollbar bg-[#fdfcf6] text-gray-900 markdown-preview break-words">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
-            code({ inline, className, children, ...props }: MarkdownCodeProps) {
-              const { style: _style, ...rest } = props;
-              void _style;
+            code(props: MarkdownCodeProps) {
+              const { children, className, node, ...rest } = props;
               const match = /language-(\w+)/.exec(className || '');
-              if (!inline && match) {
+              const isInline = !match;
+
+              if (!isInline && match) {
                 return (
                   <SyntaxHighlighter
                     style={syntaxTheme}
@@ -247,16 +255,16 @@ const ReportViewer = ({
                       whiteSpace: 'pre-wrap',
                       wordBreak: 'break-all'
                     }}
-                    {...rest}
                   >
                     {String(children).replace(/\n$/, '')}
                   </SyntaxHighlighter>
                 );
               }
+
               return (
                 <code
-                  className={`${className} ${!inline ? 'block p-6 whitespace-pre-wrap break-all bg-[#f9fafb] rounded-xl border border-[#e5e7eb]' : ''}`}
-                  {...props}
+                  className={`${className || ''} ${!isInline ? 'block p-6 whitespace-pre-wrap break-all bg-[#f9fafb] rounded-xl border border-[#e5e7eb]' : ''}`}
+                  {...rest}
                 >
                   {children}
                 </code>
