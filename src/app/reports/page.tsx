@@ -19,7 +19,8 @@ import {
   Eye,
   FileBarChart,
   Trash2,
-  Download
+  Download,
+  Languages
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import ReactMarkdown from 'react-markdown';
@@ -53,8 +54,11 @@ const TreeItem = React.memo(({
   onDelete,
   onDownload,
   onRegister,
+  onTranslate,
   isSelected,
   isExpanded,
+  isTranslating,
+  hasTranslation,
   isRoot
 }: {
   node: LogNode;
@@ -64,8 +68,11 @@ const TreeItem = React.memo(({
   onDelete: (e: React.MouseEvent, path: string, type: string) => void;
   onDownload: (e: React.MouseEvent, path: string, name: string) => void;
   onRegister?: (e: React.MouseEvent, projectName: string) => void;
+  onTranslate?: (e: React.MouseEvent, path: string) => void;
   isSelected: boolean;
   isExpanded: boolean;
+  isTranslating?: boolean;
+  hasTranslation?: boolean;
   isRoot?: boolean;
 }) => {
   const isDirectory = node.type === "directory";
@@ -121,9 +128,10 @@ const TreeItem = React.memo(({
   }
 
   return (
-    <div key={node.path} className="group flex items-center min-w-0">
+    <div key={node.path} className={`group flex items-center min-w-0 transition-opacity ${isTranslating ? "opacity-40 bg-indigo-500/5" : ""}`}>
       <button
         onClick={() => onSelect(node.path)}
+        disabled={isTranslating}
         className={`flex-1 flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all text-sm mb-0.5 min-w-0 ${
           isSelected ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "text-gray-400 hover:bg-white/5 border border-transparent"
         }`}
@@ -132,8 +140,27 @@ const TreeItem = React.memo(({
         <FileCheck className={`w-4 h-4 shrink-0 ${isSelected ? "text-emerald-400" : "text-gray-500"}`} />
         <span className="truncate" title={node.name}>{node.name}</span>
       </button>
+
+      {node.name.endsWith("_deliverable.md") && !node.name.endsWith("_kr.md") && (
+        <button
+          onClick={(e) => onTranslate?.(e, node.path)}
+          disabled={isTranslating || hasTranslation}
+          className={`p-1.5 transition-all mb-0.5 shrink-0 ${
+            isTranslating
+              ? "opacity-100 text-indigo-400"
+              : hasTranslation
+                ? "opacity-40 text-gray-600 cursor-not-allowed"
+                : "opacity-0 group-hover:opacity-100 hover:text-indigo-400"
+          }`}
+          title={hasTranslation ? "Korean version already exists" : "Translate to Korean"}
+        >
+          {isTranslating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Languages className="w-3.5 h-3.5" />}
+        </button>
+      )}
+
       <button
         onClick={(e) => onDownload(e, node.path, node.name)}
+        disabled={isTranslating}
         className="opacity-0 group-hover:opacity-100 p-1.5 hover:text-emerald-400 transition-all mb-0.5 shrink-0"
         title="Download File"
       >
@@ -141,6 +168,7 @@ const TreeItem = React.memo(({
       </button>
       <button
         onClick={(e) => onDelete(e, node.path, 'file')}
+        disabled={isTranslating}
         className="opacity-0 group-hover:opacity-100 p-1.5 hover:text-rose-500 transition-all mb-0.5 shrink-0"
         title="Delete File"
       >
@@ -268,6 +296,7 @@ export default function ReportsPage() {
   const [saving, setSaving] = useState(false);
   const [registering, setRegistering] = useState<string | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [translatingPaths, setTranslatingPaths] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
   const deferredSearch = useDeferredValue(searchQuery);
 
@@ -290,15 +319,31 @@ export default function ReportsPage() {
     }
   }, [router]);
 
+  const fetchTranslatingStatus = useCallback(async () => {
+    try {
+      const res = await fetch("/api/reports/translate");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.translatingPaths) {
+          setTranslatingPaths(new Set(data.translatingPaths));
+        }
+      }
+    } catch (err) {
+      console.error("Fetch translating status error:", err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchList();
+    fetchTranslatingStatus();
     const intervalMs = parseInt(process.env.NEXT_PUBLIC_LOG_REFRESH_INTERVAL_MS || "10000");
     const interval = setInterval(() => {
       fetchList(true);
+      fetchTranslatingStatus();
     }, intervalMs);
 
     return () => clearInterval(interval);
-  }, [fetchList]);
+  }, [fetchList, fetchTranslatingStatus]);
 
   useEffect(() => {
     if (!selectedPath) {
@@ -427,6 +472,35 @@ export default function ReportsPage() {
       setRegistering(null);
     }
   }, [fetchList]);
+  const handleTranslateReport = useCallback(async (e: React.MouseEvent, filePath: string) => {
+    e.stopPropagation();
+    if (!confirm("Do you want to translate this analysis deliverable into Korean? This will use AI and may take a moment.")) return;
+
+    setTranslatingPaths(prev => new Set(prev).add(filePath));
+    try {
+      const res = await fetch("/api/reports/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filePath }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert("Translation successful! A Korean version has been created.");
+        fetchList(true); // Silent refresh to show the new _kr.md file
+      } else {
+        alert(data.error || "Translation failed");
+      }
+    } catch (err) {
+      console.error("Translate report error:", err);
+      alert("Connection error");
+    } finally {
+      setTranslatingPaths(prev => {
+        const next = new Set(prev);
+        next.delete(filePath);
+        return next;
+      });
+    }
+  }, [fetchList]);
 
   const toggleFolder = useCallback((path: string) => {
     setExpandedFolders(prev => {
@@ -437,8 +511,9 @@ export default function ReportsPage() {
     });
   }, []);
 
-  const visibleNodes = useMemo(() => {
+  const { visibleNodes, allFilePaths } = useMemo(() => {
     const result: { node: LogNode, level: number, isExpanded: boolean }[] = [];
+    const paths = new Set<string>();
     const searchLower = deferredSearch.toLowerCase();
 
     const walk = (items: LogNode[], level: number) => {
@@ -447,6 +522,8 @@ export default function ReportsPage() {
       );
 
       sorted.forEach(node => {
+        if (node.type === "file") paths.add(node.path);
+
         const matches = !searchLower || node.name.toLowerCase().includes(searchLower) || (node.children && node.children.some(c => c.name.toLowerCase().includes(searchLower)));
         if (!matches && node.type === 'file') return;
 
@@ -460,7 +537,7 @@ export default function ReportsPage() {
     };
 
     walk(nodes, 0);
-    return result;
+    return { visibleNodes: result, allFilePaths: paths };
   }, [nodes, expandedFolders, deferredSearch]);
 
   return (
@@ -555,6 +632,9 @@ export default function ReportsPage() {
                       onDelete={handleDelete}
                       onDownload={handleDownload}
                       onRegister={handleRegister}
+                      onTranslate={handleTranslateReport}
+                      isTranslating={translatingPaths.has(node.path)}
+                      hasTranslation={allFilePaths.has(node.path.replace(".md", "_kr.md"))}
                     />
                   ))}
                 </div>

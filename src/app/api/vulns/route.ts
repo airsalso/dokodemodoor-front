@@ -22,7 +22,11 @@ export async function GET(req: Request) {
 
     const where: Prisma.VulnerabilityWhereInput = {};
     if (scanId) where.scanId = scanId;
-    if (severity) where.severity = severity;
+    if (severity && severity !== "ALL") {
+      where.severity = {
+          equals: severity.toUpperCase()
+      };
+    }
 
     const vulns = await prisma.vulnerability.findMany({
       where,
@@ -38,7 +42,21 @@ export async function GET(req: Request) {
       }
     });
 
-    return NextResponse.json({ vulns });
+    // Get summary counts for the current scope (all or specific scan)
+    const summaryData = await prisma.vulnerability.groupBy({
+      by: ['severity'],
+      where: scanId ? { scanId } : {},
+      _count: {
+        _all: true
+      }
+    });
+
+    const summary = summaryData.reduce((acc, curr) => {
+      acc[curr.severity] = curr._count._all;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return NextResponse.json({ vulns, summary });
   } catch (error) {
     console.error("Error fetching vulnerabilities:", error);
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

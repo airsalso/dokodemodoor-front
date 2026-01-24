@@ -35,6 +35,7 @@ export async function GET(
       target: historical.targetUrl,
       vulnerabilities: historical.vulnerabilities,
       startTime: historical.startTime.getTime(),
+      endTime: historical.endTime?.getTime() || null,
       duration: historical.duration,
       targetUrl: historical.targetUrl,
       sourcePath: historical.sourcePath,

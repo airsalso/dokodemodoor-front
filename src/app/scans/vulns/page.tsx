@@ -6,7 +6,7 @@ import {
     Shield, Search,
     AlertCircle, AlertTriangle, Info, ShieldAlert,
     ExternalLink, Calendar, Hash, Loader2, X, Eye,
-    ChevronLeft, ChevronRight
+    ChevronLeft, ChevronRight, Layers
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -37,6 +37,7 @@ export default function VulnerabilitiesPage() {
     const [search, setSearch] = useState("");
     const [selectedVuln, setSelectedVuln] = useState<Vulnerability | null>(null);
     const [filterSeverity, setFilterSeverity] = useState<string>(searchParams.get("severity") || "ALL");
+    const [severitySummary, setSeveritySummary] = useState<Record<string, number>>({});
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 5;
 
@@ -56,6 +57,9 @@ export default function VulnerabilitiesPage() {
             }
             const data = await res.json();
             setVulns(data.vulns || []);
+            if (data.summary) {
+                setSeveritySummary(data.summary);
+            }
         } catch (err) {
             console.error(err);
         } finally {
@@ -107,33 +111,70 @@ export default function VulnerabilitiesPage() {
                             <span className="text-xs font-black uppercase tracking-[0.3em]">Security Center</span>
                         </div>
                         <h1 className="text-4xl font-black text-white">
-                            {scanId ? `Analysis for ${scanId}` : "Vulnerability Findings"}
+                            {scanId ? `${scanId}` : "Vulnerability Findings"}
                         </h1>
                         <p className="text-gray-500 max-w-xl">
                             Consolidated security findings from all automated assessments.
                         </p>
                     </div>
 
-                    <div className="flex flex-col md:flex-row items-center gap-4">
-                         <div className="flex bg-white/5 border border-white/10 rounded-2xl p-1 overflow-hidden">
-                            {['ALL', 'CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map((s) => (
-                                <button
-                                    key={s}
-                                    onClick={() => setFilterSeverity(s)}
-                                    className={`px-4 py-2 text-[10px] font-black rounded-xl transition-all ${
-                                        filterSeverity === s ? 'bg-primary text-white shadow-lg' : 'text-gray-500 hover:text-white'
-                                    }`}
-                                >
-                                    {s}
-                                </button>
-                            ))}
+                    <div className="flex flex-col lg:flex-row items-center gap-6">
+                        <div className="flex items-center gap-2 p-2 bg-black/40 border border-white/10 rounded-[28px] backdrop-blur-xl shadow-2xl">
+                            {[
+                                { id: 'ALL', icon: Layers, label: 'ALL', color: 'gray' },
+                                { id: 'CRITICAL', icon: ShieldAlert, label: 'CRITICAL', color: 'rose' },
+                                { id: 'HIGH', icon: AlertCircle, label: 'HIGH', color: 'orange' },
+                                { id: 'MEDIUM', icon: AlertTriangle, label: 'MEDIUM', color: 'yellow' },
+                                { id: 'LOW', icon: Shield, label: 'LOW', color: 'blue' }
+                            ].map((s) => {
+                                const Icon = s.icon;
+                                const isActive = filterSeverity === s.id;
+
+                                let count = 0;
+                                if (s.id === 'ALL') {
+                                    count = Object.values(severitySummary).reduce((a, b) => a + b, 0);
+                                } else {
+                                    count = severitySummary[s.id] || 0;
+                                }
+
+                                const colorMap: Record<string, string> = {
+                                    rose: isActive ? 'bg-rose-500 text-white shadow-xl shadow-rose-500/20' : 'text-rose-500 hover:bg-rose-500/10',
+                                    orange: isActive ? 'bg-orange-500 text-white shadow-xl shadow-orange-500/20' : 'text-orange-500 hover:bg-orange-500/10',
+                                    yellow: isActive ? 'bg-yellow-500 text-white shadow-xl shadow-yellow-500/20' : 'text-yellow-500 hover:bg-yellow-500/10',
+                                    blue: isActive ? 'bg-blue-500 text-white shadow-xl shadow-blue-500/20' : 'text-blue-500 hover:bg-blue-500/10',
+                                    gray: isActive ? 'bg-white/20 text-white shadow-xl shadow-white/10' : 'text-gray-400 hover:bg-white/5',
+                                };
+
+                                return (
+                                    <button
+                                        key={s.id}
+                                        onClick={() => setFilterSeverity(s.id)}
+                                        className={`group relative flex items-center gap-3 px-6 py-4 rounded-[22px] transition-all duration-300 ${colorMap[s.color]} ${isActive ? 'scale-105 z-10' : 'opacity-60 hover:opacity-100'}`}
+                                    >
+                                        <Icon className={`w-5 h-5 transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`} />
+                                        <div className="flex flex-col items-start leading-tight min-w-0">
+                                            <span className="text-[12px] font-black uppercase tracking-tight truncate">{s.label}</span>
+                                            <span className={`text-[10px] font-bold whitespace-nowrap ${isActive ? 'text-white/70' : 'text-gray-500'}`}>
+                                                {count} FOUND
+                                            </span>
+                                        </div>
+                                        {isActive && (
+                                            <motion.div
+                                                layoutId="activeFilter"
+                                                className="absolute inset-0 rounded-[22px] bg-white/10"
+                                                transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
+                                            />
+                                        )}
+                                    </button>
+                                );
+                            })}
                         </div>
-                        <div className="relative w-full md:w-96">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
+                        <div className="relative w-full lg:w-[400px]">
+                            <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-primary" />
                             <input
                                 type="text"
-                                placeholder="Search by Type, URL or scan ID..."
-                                className="w-full bg-[#0a0c14] border border-white/10 rounded-xl pl-12 pr-4 py-4 text-base transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 text-white shadow-inner font-medium"
+                                placeholder="Search by type or metadata..."
+                                className="w-full h-[88px] bg-black/40 border border-white/10 rounded-[28px] pl-16 pr-6 text-lg transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 text-white shadow-inner font-medium backdrop-blur-xl"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                             />

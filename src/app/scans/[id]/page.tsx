@@ -28,11 +28,14 @@ function ScanDetailContent() {
     sourcePath?: string;
     config?: string;
     startTime?: number;
+    endTime?: number | null;
     duration?: string;
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [copiedId, setCopiedId] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState(false);
   const [restarting, setRestarting] = useState(false);
   const [showStatus, setShowStatus] = useState(false);
   const [statusLoading, setStatusLoading] = useState(false);
@@ -112,6 +115,7 @@ function ScanDetailContent() {
     }
   };
 
+  /*
   const handleTranslate = async () => {
     if (!confirm("Do you want to translate the final report to Korean? This may take a few minutes using AI.")) return;
 
@@ -132,6 +136,7 @@ function ScanDetailContent() {
       setTranslating(false);
     }
   };
+  */
 
   const renderStatusLines = (content: string) => {
     const lines = content.split('\n');
@@ -147,21 +152,19 @@ function ScanDetailContent() {
         const canRerun = ["PENDING", "FAILED", "ROLLED-BACK", "ROLLED BACK", "COMPLETED", "SKIPPED"].includes(status);
         const canRollback = status === "COMPLETED";
 
-        const isReportAgent = name.toLowerCase().includes('report');
-        const canTranslate = isReportAgent && status === "COMPLETED";
-
-        const isAgentActive = !!actionLoading?.startsWith(name) || (isReportAgent && translating);
+        // const isReportAgent = name.toLowerCase().includes('report');
+        const isAgentActive = !!actionLoading?.startsWith(name);
 
         return (
           <div key={i} className="group relative flex items-center hover:bg-white/5 px-2 py-0.5 rounded cursor-default transition-colors overflow-hidden">
             <span className="flex-1 whitespace-pre">{line}</span>
             {/* Action buttons - hide when active or translating */}
-            {!isAgentActive && (canRerun || canRollback || canTranslate) && (
+            {!isAgentActive && (canRerun || canRollback) && (
               <div className="absolute right-2 opacity-0 group-hover:opacity-100 flex items-center gap-3 bg-black/80 px-4 py-1.5 rounded-xl backdrop-blur-xl border border-white/20 shadow-2xl transition-all scale-95 group-hover:scale-100">
                 {canRerun && (
                   <button
                     onClick={(e) => { e.stopPropagation(); handleAgentAction(name, 'rerun'); }}
-                    disabled={!!actionLoading || translating || data?.status?.toLowerCase() === 'translating'}
+                    disabled={!!actionLoading || translating || data?.status?.toLowerCase() === 'translating' || data?.status?.toLowerCase() === 'running'}
                     className="text-[9px] font-black hover:text-primary transition-colors uppercase tracking-widest flex items-center gap-1.5 disabled:opacity-30 disabled:cursor-not-allowed"
                     title="Rerun this agent"
                   >
@@ -172,39 +175,18 @@ function ScanDetailContent() {
                 {canRollback && (
                   <button
                     onClick={(e) => { e.stopPropagation(); handleAgentAction(name, 'rollback'); }}
-                    disabled={!!actionLoading || translating || data?.status?.toLowerCase() === 'translating'}
+                    disabled={!!actionLoading || translating || data?.status?.toLowerCase() === 'translating' || data?.status?.toLowerCase() === 'running'}
                     className="text-[9px] font-black hover:text-amber-400 transition-colors uppercase tracking-widest flex items-center gap-1.5 disabled:opacity-30 disabled:cursor-not-allowed"
                     title="Rollback to this agent"
                   >
                     <span>⏪</span> ROLLBACK
                   </button>
                 )}
-                {canTranslate && (
-                  <>
-                    {(canRerun || canRollback) && <div className="w-[1px] h-4 bg-white/20" />}
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setShowStatus(false); handleTranslate(); }}
-                      disabled={translating}
-                      className="text-[9px] font-black text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-widest flex items-center gap-1.5"
-                      title="Translate report to Korean"
-                    >
-                      <Languages className="w-3 h-3" /> {translating ? '...' : (isKo ? '한글번역' : 'TRANSLATE')}
-                    </button>
-                  </>
-                )}
               </div>
             )}
             {isAgentActive && (
               <div className="absolute inset-0 bg-black/60 flex items-center justify-center gap-3 rounded-lg backdrop-blur-md z-10 animate-in fade-in duration-300">
                 <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                {(isReportAgent && translating) && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleStop(); }}
-                    className="px-4 py-1.5 bg-rose-500 text-white rounded-lg text-[10px] font-black hover:bg-rose-600 transition-all flex items-center gap-2 shadow-xl shadow-rose-500/20 active:scale-95"
-                  >
-                    <StopCircle className="w-3.5 h-3.5" /> {isKo ? "번역 중단" : "STOP TRANSLATING"}
-                  </button>
-                )}
               </div>
             )}
           </div>
@@ -279,6 +261,27 @@ function ScanDetailContent() {
       }
     } catch (err) {
       console.error("Share error:", err);
+    }
+  };
+
+  const handleCopyId = async () => {
+    try {
+      await navigator.clipboard.writeText(id);
+      setCopiedId(true);
+      setTimeout(() => setCopiedId(false), 2000);
+    } catch (err) {
+      console.error("Copy ID error:", err);
+    }
+  };
+
+  const handleCopyUrl = async () => {
+    if (!data?.target) return;
+    try {
+      await navigator.clipboard.writeText(data.target);
+      setCopiedUrl(true);
+      setTimeout(() => setCopiedUrl(false), 2000);
+    } catch (err) {
+      console.error("Copy URL error:", err);
     }
   };
 
@@ -423,19 +426,74 @@ function ScanDetailContent() {
                     {t(data?.status || "")}
                   </div>
 
-                  <div className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[10px] font-mono text-gray-500">
+                  <button
+                    onClick={handleCopyId}
+                    className="group relative px-4 py-1.5 rounded-xl bg-white/10 border border-white/20 text-xs font-black font-mono text-gray-300 shadow-inner hover:bg-white/20 transition-all active:scale-95"
+                    title="Click to copy ID"
+                  >
                     {id}
-                  </div>
+                    <AnimatePresence>
+                      {copiedId && (
+                        <motion.span
+                          initial={{ opacity: 0, scale: 0.8, y: -20 }}
+                          animate={{ opacity: 1, scale: 1, y: -45 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          className="absolute left-1/2 -translate-x-1/2 px-3 py-1 bg-emerald-500 text-white text-[9px] font-black rounded-lg shadow-xl shadow-emerald-500/20 whitespace-nowrap"
+                        >
+                          COPIED!
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                  </button>
                 </div>
 
                 {data && (
-                  <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-gray-400">
-                    <Clock className="w-3 h-3 text-primary" />
-                    <span>{t("duration")}: {formatDuration((data.status?.toLowerCase() === 'running' || data.status?.toLowerCase() === 'translating') && data.startTime ? Math.round((Date.now() - data.startTime) / 1000) : data.duration)}</span>
+                  <div className="flex items-center gap-2 px-5 py-2 rounded-full bg-white/5 border border-white/10 text-xs font-black uppercase tracking-widest text-gray-300 shadow-sm">
+                    <Clock className="w-4 h-4 text-primary" />
+                    <span className="flex items-center gap-1.5">
+                      {t("duration")}:
+                      <span className="text-white">
+                        {(() => {
+                          const isRunning = data.status?.toLowerCase() === 'running' || data.status?.toLowerCase() === 'translating';
+                          if (isRunning && data.startTime) {
+                            return formatDuration(Math.round((Date.now() - data.startTime) / 1000));
+                          }
+                          // Fallback: Use startTime/endTime if duration field is missing
+                          if (data.duration && data.duration !== "...") {
+                            return formatDuration(data.duration);
+                          }
+                          if (data.startTime && data.endTime) {
+                            const diff = Math.round((data.endTime - data.startTime) / 1000);
+                            if (diff > 0) return formatDuration(diff);
+                          }
+                          return "...";
+                        })()}
+                      </span>
+                    </span>
                   </div>
                 )}
               </div>
-              <p className="text-gray-500 font-mono text-sm tracking-tighter">{data?.target}</p>
+              <div className="relative flex items-center group/url w-fit">
+                <button
+                  onClick={handleCopyUrl}
+                  className="text-gray-300 font-mono text-base tracking-tight mt-1 opacity-80 hover:opacity-100 hover:text-primary transition-all active:scale-[0.98] text-left cursor-pointer"
+                  title="Click to copy Target URL"
+                >
+                  {data?.target}
+                </button>
+                <AnimatePresence>
+                  {copiedUrl && (
+                    <motion.span
+                      initial={{ opacity: 0, scale: 0.8, x: 0 }}
+                      animate={{ opacity: 1, scale: 1, x: 12 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      className="inline-block ml-2 px-3 py-1 bg-primary text-white text-[9px] font-black rounded-lg shadow-xl shadow-primary/20 whitespace-nowrap"
+                    >
+                      COPIED!
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
           </div>
 

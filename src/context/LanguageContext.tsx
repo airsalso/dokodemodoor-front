@@ -104,12 +104,13 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     return translations[language][key] || key;
   }, [language]);
 
-  const formatDuration = useCallback((val: string | number | undefined) => {
-    if (!val || val === "...") return "...";
+  const formatDuration = useCallback((val: string | number | undefined | null) => {
+    if (val === null || val === undefined || val === "" || val === "...") return "...";
 
     let totalSeconds = 0;
     if (typeof val === "string") {
-      totalSeconds = parseInt(val.replace("s", ""));
+      // Handle "123s" or just "123"
+      totalSeconds = parseInt(val.replace(/[^\d.]/g, ""));
     } else {
       totalSeconds = Math.round(val);
     }

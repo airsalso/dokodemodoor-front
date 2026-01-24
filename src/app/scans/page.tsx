@@ -507,7 +507,7 @@ const ScanCard = React.memo(({ scan, isActive, t, language, formatDuration, user
             <h3 className="font-black text-xl text-white group-hover:text-primary transition-colors mb-1 truncate">
               {scan.target || scan.targetUrl}
             </h3>
-            <p className="text-sm text-gray-500 font-mono tracking-tight truncate">
+            <p className="text-sm text-gray-400 font-mono tracking-tight truncate opacity-90">
               {scan.projectName ? `${scan.projectName} - ${scan.id}` : scan.id}
             </p>
           </div>
@@ -516,7 +516,7 @@ const ScanCard = React.memo(({ scan, isActive, t, language, formatDuration, user
           <div className="flex items-center gap-8 flex-shrink-0">
             {/* Date */}
             <div className="hidden lg:flex flex-col items-center min-w-[120px]">
-              <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-1.5">Started</p>
+              <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1.5 opacity-70">Started</p>
               <p className="text-sm font-bold text-gray-300 text-center">
                 {scan.startTime ? (
                   isNaN(new Date(scan.startTime).getTime())
@@ -528,7 +528,7 @@ const ScanCard = React.memo(({ scan, isActive, t, language, formatDuration, user
 
             {/* Vulnerabilities */}
             <div className="hidden sm:flex flex-col items-center min-w-[80px]">
-              <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-1.5">Findings</p>
+              <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1.5 opacity-70">Findings</p>
               <button
                 onClick={(e) => {
                   e.preventDefault();
@@ -543,8 +543,17 @@ const ScanCard = React.memo(({ scan, isActive, t, language, formatDuration, user
 
             {/* Duration */}
             <div className="flex flex-col items-center min-w-[100px]">
-              <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-1.5">Duration</p>
-              <p className="text-sm font-bold text-gray-300">{formatDuration(scan.duration ?? undefined)}</p>
+              <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1.5 opacity-70">Duration</p>
+              <p className="text-sm font-bold text-gray-200">
+                  {(() => {
+                    if (scan.duration) return formatDuration(scan.duration);
+                    if (scan.endTime && scan.startTime) {
+                        const diff = Math.round((new Date(scan.endTime).getTime() - new Date(scan.startTime).getTime()) / 1000);
+                        if (diff > 0) return formatDuration(diff);
+                    }
+                    return "...";
+                  })()}
+              </p>
             </div>
 
             {/* Actions */}

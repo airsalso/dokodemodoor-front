@@ -61,7 +61,7 @@ export const processScanFindings = async (scanId: string, sourcePath: string | n
               await prisma.vulnerability.create({
                 data: {
                   ...signature,
-                  severity: v.severity || v.confidence === 'high' ? 'HIGH' : mappedSeverity,
+                  severity: (v.severity || (v.confidence === 'high' ? 'HIGH' : mappedSeverity)).toUpperCase(),
                   description: v.description || v.details || v.notes || "",
                   details: JSON.stringify(v),
                 }
