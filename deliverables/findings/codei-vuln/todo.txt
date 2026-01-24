@@ -1,0 +1,5 @@
+[ ] Map Command/Code Injection Sinks (exec, eval)
+[ ] Trace Untrusted Data to Execution Sinks
+[ ] Verify Argument Escaping/Allowlists
+[ ] Verify remote execution via Playwright if applicable
+[ ] Document Code Injection Findings (Analysis + Queue)
