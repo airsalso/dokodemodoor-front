@@ -678,9 +678,7 @@ npx prisma migrate deploy
 
 ## 📄 라이선스
 
-이 프로젝트는 독점 소프트웨어입니다. 모든 권리 보유.
-
-저작권 보유자의 명시적인 서면 허가 없이 이 소프트웨어를 무단으로 복사, 수정, 배포 또는 사용하는 것은 엄격히 금지됩니다.
+이 프로젝트는
 
 ---
 
@@ -699,7 +697,7 @@ npx prisma migrate deploy
 
 지원, 질문 또는 기능 요청:
 
-- **이메일**: support@dokodemodoor.io
+- **이메일**: airsalso@naver.com
 - **이슈**: [GitHub Issues](https://github.com/airsalso/dokodemodoor-front/issues)
 - **문서**: [Wiki](https://github.com/airsalso/dokodemodoor-front/wiki)
 
