@@ -24,12 +24,10 @@ export const processScanFindings = async (scanId: string, sourcePath: string | n
     }
 
     const files = fs.readdirSync(deliverablesPath);
-    // Be more inclusive: count any JSON file that has a 'vulnerabilities' array
     const jsonFiles = files.filter(f => f.endsWith(".json"));
+    console.log(`[Findings] Processing ${jsonFiles.length} files in ${deliverablesPath}`);
 
     for (const file of jsonFiles) {
-      // For typeKey, still try to use the prefix if it's *_exploitation_queue.json,
-      // otherwise use the filename or 'general'
       const typeKey = file.includes("_exploitation_queue.json")
         ? file.replace("_exploitation_queue.json", "")
         : file.replace(".json", "");
@@ -39,30 +37,65 @@ export const processScanFindings = async (scanId: string, sourcePath: string | n
       try {
         const content = fs.readFileSync(path.join(deliverablesPath, file), "utf8");
         const json = JSON.parse(content);
-
-        // Support both top-level array or vulnerabilities key
         const findings = Array.isArray(json) ? json : (json.vulnerabilities || json.findings || []);
 
         if (Array.isArray(findings)) {
-          // Save each vulnerability to DB (with deduplication)
+          console.log(`[Findings] File ${file}: ${findings.length} findings found.`);
           for (const v of findings) {
-            const signature = {
-              scanId,
-              type: typeKey,
-              title: v.title || v.type || v.vulnerability_type || `${typeKey.toUpperCase()} Found`,
-              evidence: v.evidence || v.proof || v.poc || v.witness_payload || v.path || "",
-            };
+            // 1. Determine a stable 'Title'
+            // If engine provides a specific ID (e.g. AUTH-VULN-01), use it to ensure uniqueness
+            const baseTitle = v.title || v.type || v.vulnerability_type || `${typeKey.toUpperCase()} Found`;
+            const findingId = v.ID || v.vulnerability_id || v.id;
+            const title = findingId ? `[${findingId}] ${baseTitle}` : baseTitle;
 
+            // 2. Determine Evidence/Location
+            const evidence = v.evidence || v.proof || v.poc || v.vulnerable_code_location || v.source_endpoint || v.endpoint || v.source || v.path || v.witness_payload || "";
+            const description = v.description || v.details || v.notes || "";
+            const severity = (v.severity || (v.confidence === 'high' ? 'HIGH' : mappedSeverity)).toUpperCase();
+
+            // 3. Identification & Deduplication
+            // We search for an existing finding with the SAME scanId, type, and title.
+            // Since the title now contains the unique ID (if available), this is very reliable.
+            // If No ID is available, we also include evidence in the match to distinguish generic titles.
             const existing = await prisma.vulnerability.findFirst({
-              where: signature
+              where: {
+                scanId,
+                type: typeKey,
+                title,
+                // If title is generic (no ID), the evidence must also match exactly to be a duplicate
+                ...(findingId ? {} : { evidence })
+              }
             });
 
-            if (!existing) {
+            if (existing) {
+              // Update if the new finding has more information
+              const isImproved = (description.length > (existing.description?.length || 0)) ||
+                                (evidence.length > (existing.evidence?.length || 0));
+
+              if (isImproved) {
+                console.log(`[Findings] Updating finding with better info: ${title}`);
+                await prisma.vulnerability.update({
+                  where: { id: existing.id },
+                  data: {
+                    evidence: evidence || existing.evidence,
+                    description: description || existing.description,
+                    severity,
+                    details: JSON.stringify(v)
+                  }
+                });
+              } else {
+                console.log(`[Findings] Skipping existing finding: ${title}`);
+              }
+            } else {
+              console.log(`[Findings] Creating NEW finding: ${title}`);
               await prisma.vulnerability.create({
                 data: {
-                  ...signature,
-                  severity: (v.severity || (v.confidence === 'high' ? 'HIGH' : mappedSeverity)).toUpperCase(),
-                  description: v.description || v.details || v.notes || "",
+                  scanId,
+                  type: typeKey,
+                  title,
+                  evidence,
+                  severity,
+                  description,
                   details: JSON.stringify(v),
                 }
               });

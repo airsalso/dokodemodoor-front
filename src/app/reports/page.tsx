@@ -67,7 +67,7 @@ const TreeItem = React.memo(({
   onSelect: (path: string) => void;
   onDelete: (e: React.MouseEvent, path: string, type: string) => void;
   onDownload: (e: React.MouseEvent, path: string, name: string) => void;
-  onRegister?: (e: React.MouseEvent, projectName: string) => void;
+  onRegister?: (e: React.MouseEvent, projectName: string, scanId?: string) => void;
   onTranslate?: (e: React.MouseEvent, path: string) => void;
   isSelected: boolean;
   isExpanded: boolean;
@@ -96,13 +96,18 @@ const TreeItem = React.memo(({
           )}
         </button>
 
-        {isRoot && !node.isRegistered && (
+        {isRoot && (
           <button
-            onClick={(e) => onRegister?.(e, node.name)}
-            className="flex items-center gap-1 px-3 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[10px] font-black rounded-lg border border-emerald-500/20 transition-all shrink-0 mr-1"
+            onClick={(e) => onRegister?.(e, node.name, node.scanId)}
+            className={`flex items-center gap-1 px-3 py-1 text-[10px] font-black rounded-lg border transition-all shrink-0 mr-1 ${
+              node.isRegistered
+                ? "bg-primary/10 hover:bg-primary/20 text-primary border-primary/20"
+                : "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/20"
+            }`}
+            title={node.isRegistered ? "Sync Data" : "Register Manual Findings"}
           >
-            <RefreshCw className="w-3 h-3" />
-            REGISTER
+            <RefreshCw className={`w-3 h-3 ${node.isRegistered ? "" : ""}`} />
+            {node.isRegistered ? "SYNC" : "REGISTER"}
           </button>
         )}
 
@@ -456,20 +461,21 @@ export default function ReportsPage() {
     }
   }, []);
 
-  const handleRegister = useCallback(async (e: React.MouseEvent, projectName: string) => {
+  const handleRegister = useCallback(async (e: React.MouseEvent, projectName: string, scanId?: string) => {
     e.stopPropagation();
-    if (!confirm(`Do you want to register manual findings for '${projectName}' into the Pentest History?`)) return;
+    const action = scanId ? "re-synchronize" : "register manual";
+    if (!confirm(`Do you want to ${action} findings for '${projectName}'? This will update the Pentest History.`)) return;
 
     setRegistering(projectName);
     try {
       const res = await fetch("/api/reports/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectName }),
+        body: JSON.stringify({ projectName, scanId }),
       });
       const data = await res.json();
       if (res.ok) {
-        alert(`Successfully registered! ${data.vulnerabilities} vulnerabilities found.`);
+        alert(`Successfully ${scanId ? 'synchronized' : 'registered'}! ${data.vulnerabilities} vulnerabilities found.`);
         fetchList(true); // Silent refresh to update status
       } else {
         alert(data.error || "Registration failed");
