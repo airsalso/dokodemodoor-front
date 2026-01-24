@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DokodemoDoor - 프로젝트 소개</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #8b5cf6;
+            border-bottom: 3px solid #8b5cf6;
+            padding-bottom: 10px;
+            margin: 30px 0 20px 0;
+        }
+
+        h2 {
+            color: #3b82f6;
+            margin: 25px 0 15px 0;
+            padding-left: 10px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        h3 {
+            color: #10b981;
+            margin: 20px 0 10px 0;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background: #8b5cf6;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        a {
+            color: #8b5cf6;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .mermaid {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        blockquote {
+            border-left: 4px solid #8b5cf6;
+            padding-left: 15px;
+            margin: 15px 0;
+            color: #666;
+            font-style: italic;
+        }
+
+        ul, ol {
+            margin: 10px 0 10px 30px;
+        }
+
+        li {
+            margin: 5px 0;
+        }
+
+        hr {
+            border: none;
+            border-top: 2px solid #e0e0e0;
+            margin: 30px 0;
+        }
+
+        .badge {
+            display: inline-block;
+            margin: 5px;
+        }
+
+        [align="center"] {
+            text-align: center;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 18px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="content" class="loading">
+            📄 README.md 로딩 중...
+        </div>
+    </div>
+
+    <script>
+        // Mermaid 초기화
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+
+        // README.md 파일 로드 및 렌더링
+        async function loadReadme() {
+            try {
+                const response = await fetch('README.md');
+                const markdown = await response.text();
+
+                // Marked 설정
+                marked.setOptions({
+                    breaks: true,
+                    gfm: true,
+                    headerIds: true,
+                    mangle: false
+                });
+
+                // Markdown을 HTML로 변환
+                const html = marked.parse(markdown);
+
+                // 컨텐츠 삽입
+                document.getElementById('content').innerHTML = html;
+
+                // Mermaid 다이어그램 렌더링
+                mermaid.init(undefined, document.querySelectorAll('.language-mermaid'));
+
+            } catch (error) {
+                document.getElementById('content').innerHTML = `
+                    <div style="color: red; padding: 20px;">
+                        <h2>❌ 오류 발생</h2>
+                        <p>README.md 파일을 로드할 수 없습니다.</p>
+                        <p>이 HTML 파일이 README.md와 같은 디렉토리에 있는지 확인하세요.</p>
+                        <pre>${error.message}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        // 페이지 로드 시 README 로드
+        window.addEventListener('DOMContentLoaded', loadReadme);
+    </script>
+</body>
+</html>
