@@ -1,7 +1,7 @@
 # XSS Analysis Report
 
 ## 1. Executive Summary
-The Dokodemodoor‑front application is a Next.js 13+ SPA that renders user‑generated content from the file system. The application exposes a REST API for reading and writing report files (`/api/reports/file`). The client‑side page `src/app/reports/page.tsx` renders the file content using `dangerouslySetInnerHTML` without any sanitization. This creates a **stored XSS** vector that is externally exploitable: any authenticated user can create or edit a report file, inject malicious HTML/JS, and have it executed in the victim’s browser when the report is viewed.
+The Dokodemodoor front‑end is a Next.js 13+ single‑page application that allows authenticated users to create, edit, and view report files stored on the server. The client‑side page `src/app/reports/page.tsx` renders the file content using `dangerouslySetInnerHTML` without any sanitization. This creates a **stored XSS** vector that is externally exploitable: any authenticated user can inject malicious HTML/JavaScript into a report, and the payload will execute in the victim’s browser when the report is viewed.
 
 The vulnerability is not mitigated by CSP or other defenses because the application does not set a restrictive CSP header and relies solely on the default browser policy. The sink is a direct DOM insertion in the HTML body context, and the source is a network‑reachable API that accepts arbitrary content. No encoding or escaping is performed on the data before rendering.
 
@@ -9,10 +9,10 @@ The vulnerability is not mitigated by CSP or other defenses because the applicat
 | Pattern | Location | Impact |
 |---------|----------|--------|
 | **Stored XSS via `dangerouslySetInnerHTML`** | `src/app/reports/page.tsx` (line ~278) | Arbitrary script execution in any user’s browser when a report is viewed. |
-| **Potential Log XSS** | `src/app/logs/page.tsx` (line ~278) | Similar to reports, but logs are not user‑editable; risk is lower but still present if logs contain attacker‑controlled data. |
+| **Potential Log XSS** | `src/app/logs/page.tsx` (line ~240) | Similar to reports, but logs are not user‑editable; risk is lower but still present if logs contain attacker‑controlled data. |
 
 ## 3. Strategic Intelligence for Exploitation
-- **Authentication**: The API requires a valid JWT stored in an HTTP‑Only cookie. An attacker can obtain a token via XSS or other means, or simply use their own account to create malicious reports.
+- **Authentication**: The API requires a valid JWT stored in an HTTP‑Only cookie. An attacker can obtain a token via XSS or simply use their own account to create malicious reports.
 - **Role**: Any authenticated user can write to `/api/reports/file`. No ownership checks are performed; thus a normal user can create a report that will be displayed to any other user.
 - **CSP**: No CSP header is set in the codebase. The default browser policy allows inline scripts, so the injected payload will execute.
 - **Framework**: The application uses React. The `dangerouslySetInnerHTML` hook bypasses React’s automatic escaping, making it a direct sink.
