@@ -17,6 +17,7 @@ declare global {
     sourcePath?: string;
     targetUrl?: string;
     config?: string;
+    sessionId?: string;
     duration?: string;
     process?: ChildProcess | null;
   } | null;

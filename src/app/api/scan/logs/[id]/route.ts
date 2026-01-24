@@ -20,6 +20,7 @@ export async function GET(
       targetUrl: global.activeScan.targetUrl || global.activeScan.target,
       sourcePath: global.activeScan.sourcePath,
       config: global.activeScan.config,
+      sessionId: global.activeScan.sessionId,
     });
   }
 
@@ -40,6 +41,7 @@ export async function GET(
       targetUrl: historical.targetUrl,
       sourcePath: historical.sourcePath,
       config: historical.config,
+      sessionId: historical.sessionId,
     });
   }
 

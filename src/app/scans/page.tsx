@@ -68,7 +68,12 @@ export default function ScansHistory() {
 
       const data = await res.json();
 
-      setScans(data.history || []);
+      // Filter out active scan from history to avoid duplication
+      const historyWithoutActive = data.active
+        ? (data.history || []).filter((scan: ScanRecord) => scan.id !== data.active.id)
+        : (data.history || []);
+
+      setScans(historyWithoutActive);
       setTotalPages(data.pagination?.totalPages || 1);
       if (data.stats) setTotalCounts(data.stats);
 

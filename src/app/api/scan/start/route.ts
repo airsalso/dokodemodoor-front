@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/auth-server";
 import { processScanFindings, captureScanReports } from "@/lib/scan-utils";
 import type { Prisma } from "@prisma/client";
+import fs from "fs";
 
 type ActiveScan = {
   id: string;
@@ -15,6 +16,7 @@ type ActiveScan = {
   sourcePath?: string;
   targetUrl?: string;
   config?: string;
+  sessionId?: string;
   duration?: string;
   process?: ChildProcess | null;
 };
@@ -87,6 +89,7 @@ export async function POST(req: Request) {
 
   // Persist scan to DB (Upsert logic to avoid duplication on restarts)
   if (existingScanId) {
+    console.log(`[Scan] Restarting existing scan: ${existingScanId}`);
     await prisma.scan.update({
       where: { id: existingScanId },
       data: {
@@ -97,6 +100,23 @@ export async function POST(req: Request) {
     });
     // Removed: delete findings at start. They will be refreshed at the end.
   } else {
+    // Check if there's a previous completed scan with same parameters
+    const previousScan = await prisma.scan.findFirst({
+      where: {
+        targetUrl,
+        sourcePath,
+        status: { in: ["completed", "failed"] }
+      },
+      orderBy: { startTime: "desc" }
+    });
+
+    if (previousScan) {
+      console.log(`[Scan] Creating NEW scan ${scanId} (previous scan ${previousScan.id} was ${previousScan.status})`);
+    } else {
+      console.log(`[Scan] Creating FIRST scan ${scanId} for ${targetUrl}`);
+    }
+
+    // New scan: create with vulnerabilities = 0 to avoid showing stale data
     await prisma.scan.create({
       data: {
         id: scanId,
@@ -104,6 +124,7 @@ export async function POST(req: Request) {
         sourcePath,
         config,
         status: "running",
+        vulnerabilities: 0, // Initialize to 0 for new scans
         userId,
       }
     });
@@ -147,6 +168,70 @@ export async function POST(req: Request) {
       clearInterval(findingsInterval);
     }
   }, 5000);
+
+  // Capture session ID from engine store after a delay
+  // (Engine creates session immediately after spawn, but might take a few seconds to write to disk)
+  const captureSessionId = async (retryCount = 0) => {
+    try {
+      const STORE_PATH = process.env.STORE_PATH || "/home/ubuntu/dokodemodoor/.dokodemodoor-store.json";
+      if (!fs.existsSync(STORE_PATH)) {
+        if (retryCount < 5) setTimeout(() => captureSessionId(retryCount + 1), 3000);
+        return;
+      }
+
+      const store = JSON.parse(fs.readFileSync(STORE_PATH, "utf-8"));
+      const sessions = store.sessions || {};
+
+      let matchedSessionId = "";
+      let latestTimestamp = 0;
+
+      const scanStartTime = scanData.startTime; // This is the numerical timestamp
+
+      for (const [sessionId, sessionData] of Object.entries(sessions)) {
+        const session = sessionData as { webUrl?: string; repoPath?: string; createdAt?: string };
+        if (session.webUrl === targetUrl && session.repoPath === sourcePath) {
+          const sessionTime = session.createdAt ? new Date(session.createdAt).getTime() : 0;
+
+          // Only pick sessions created AROUND or AFTER the scan started
+          // Allowing 10 seconds buffer behind in case of clock drifts,
+          // but prioritizing the absolute latest.
+          if (sessionTime > latestTimestamp) {
+            latestTimestamp = sessionTime;
+            matchedSessionId = sessionId;
+          }
+        }
+      }
+
+      // Verification: If the matched session is older than the scan start time,
+      // it might be an old session and the new one isn't written yet.
+      // Scan start time is T. If latest matching session is T-1hour, wait for the new one.
+      const isNewSession = latestTimestamp > (scanStartTime - 30000); // Created within 30s of scan start or later
+
+      if (matchedSessionId && isNewSession) {
+        console.log(`[Scan] Captured CORRECT engine session ID: ${matchedSessionId} (Session Time: ${new Date(latestTimestamp).toISOString()}, Scan Start: ${new Date(scanStartTime).toISOString()})`);
+
+        await prisma.scan.update({
+          where: { id: scanId },
+          data: { sessionId: matchedSessionId }
+        });
+
+        if (global.activeScan && global.activeScan.id === scanId) {
+          global.activeScan.sessionId = matchedSessionId;
+        }
+      } else {
+        if (retryCount < 10) {
+          console.log(`[Scan] Session not found or too old. Retrying... (${retryCount + 1}/10)`);
+          setTimeout(() => captureSessionId(retryCount + 1), 3000);
+        } else {
+          console.warn(`[Scan] Failed to capture new session ID after 10 retries.`);
+        }
+      }
+    } catch (err) {
+      console.error(`[Scan] Error capturing session ID:`, err);
+    }
+  };
+
+  setTimeout(() => captureSessionId(0), 5000); // Start checking after 5s
 
 
   proc.on("close", async (code) => {

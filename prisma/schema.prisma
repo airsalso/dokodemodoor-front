@@ -57,6 +57,7 @@ model Scan {
   targetUrl       String
   sourcePath      String?
   config          String?
+  sessionId       String?  // Engine session ID for direct mapping
   status          String   // "running", "completed", "failed"
   startTime       DateTime @default(now())
   endTime         DateTime?

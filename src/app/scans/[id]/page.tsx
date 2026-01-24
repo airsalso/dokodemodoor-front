@@ -27,6 +27,7 @@ function ScanDetailContent() {
     targetUrl?: string;
     sourcePath?: string;
     config?: string;
+    sessionId?: string;
     startTime?: number;
     endTime?: number | null;
     duration?: string;
@@ -36,10 +37,12 @@ function ScanDetailContent() {
   const [copied, setCopied] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
+  const [copiedCommand, setCopiedCommand] = useState(false);
   const [restarting, setRestarting] = useState(false);
   const [showStatus, setShowStatus] = useState(false);
   const [statusLoading, setStatusLoading] = useState(false);
   const [statusResult, setStatusResult] = useState<string | null>(null);
+  const [statusCommand, setStatusCommand] = useState<string | null>(null);
   const [cleaning, setCleaning] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [translating, setTranslating] = useState(false);
@@ -53,8 +56,10 @@ function ScanDetailContent() {
       const result = await res.json();
       if (res.ok) {
         setStatusResult(result.status);
+        setStatusCommand(result.command);
       } else {
         setStatusResult(result.error || "Failed to fetch status");
+        setStatusCommand(null);
       }
     } catch (err) {
       console.error("Fetch status error:", err);
@@ -65,7 +70,8 @@ function ScanDetailContent() {
   };
 
   const handleCleanup = async () => {
-    if (!confirm("Are you sure you want to cleanup this session? Temporary files and in-memory trace will be removed.")) return;
+    const sId = data?.sessionId || "unknown";
+    if (!confirm(`Are you sure you want to cleanup this session? (Session ID: ${sId})\nTemporary files and in-memory trace will be removed.`)) return;
 
     setCleaning(true);
     try {
@@ -282,6 +288,17 @@ function ScanDetailContent() {
       setTimeout(() => setCopiedUrl(false), 2000);
     } catch (err) {
       console.error("Copy URL error:", err);
+    }
+  };
+
+  const handleCopyCommand = async () => {
+    if (!statusCommand) return;
+    try {
+      await navigator.clipboard.writeText(statusCommand);
+      setCopiedCommand(true);
+      setTimeout(() => setCopiedCommand(false), 2000);
+    } catch (err) {
+      console.error("Copy Command error:", err);
     }
   };
 
@@ -522,10 +539,19 @@ function ScanDetailContent() {
 
             <button
               onClick={handleCleanup}
-              disabled={cleaning}
-              className={`px-6 py-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all flex items-center gap-2 font-black text-gray-300 ${cleaning ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={cleaning || data?.status?.toLowerCase() !== 'failed'}
+              className={`px-6 py-4 rounded-2xl border transition-all flex items-center gap-2 font-black ${
+                (cleaning || data?.status?.toLowerCase() !== 'failed')
+                  ? "bg-white/5 border-white/10 text-gray-500 opacity-30 cursor-not-allowed"
+                  : "bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:border-amber-500/30"
+              }`}
+              title={data?.status?.toLowerCase() !== 'failed' ? "Only failed scans can be cleaned up" : "Cleanup session files"}
             >
-              {cleaning ? <RefreshCw className="w-5 h-5 animate-spin text-amber-500" /> : <Eraser className="w-5 h-5 text-amber-500" />}
+              {cleaning ? (
+                <RefreshCw className="w-5 h-5 animate-spin text-amber-500" />
+              ) : (
+                <Eraser className={`w-5 h-5 ${data?.status?.toLowerCase() === 'failed' ? 'text-amber-500' : 'text-gray-500'}`} />
+              )}
               CLEANUP
             </button>
 
@@ -686,6 +712,34 @@ function ScanDetailContent() {
                     className="font-mono text-sm text-gray-300 bg-black/60 p-6 rounded-2xl border border-white/10 leading-relaxed overflow-x-auto custom-scrollbar max-h-[60vh]"
                   >
                     {renderStatusLines(statusResult || "")}
+                  </div>
+                )}
+
+                {statusCommand && !statusLoading && (
+                  <div className="mt-6 space-y-2">
+                    <div className="flex items-center justify-between ml-1">
+                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Executed Command (Debug)</p>
+                      <AnimatePresence>
+                        {copiedCommand && (
+                          <motion.span
+                            initial={{ opacity: 0, x: 10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0 }}
+                            className="text-[10px] font-black text-primary uppercase"
+                          >
+                            Copied to clipboard!
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                    <button
+                      onClick={handleCopyCommand}
+                      className="w-full text-left bg-black/40 border border-white/5 p-4 rounded-xl font-mono text-[11px] text-primary/70 break-all hover:bg-black/60 hover:border-primary/20 transition-all active:scale-[0.99] group relative overflow-hidden"
+                      title="Click to copy command"
+                    >
+                      <div className="relative z-10">{statusCommand}</div>
+                      <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </button>
                   </div>
                 )}
               </div>

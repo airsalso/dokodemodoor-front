@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import fs from "fs";
 import { exec } from "child_process";
 import { promisify } from "util";
 import { cookies } from "next/headers";
@@ -8,17 +7,7 @@ import { jwtVerify } from "jose";
 
 const execPromise = promisify(exec);
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "default_secret_key_12345");
-const STORE_PATH = process.env.STORE_PATH || "/home/ubuntu/dokodemodoor/.dokodemodoor-store.json";
 const ENGINE_DIR = process.env.ENGINE_DIR || "/home/ubuntu/dokodemodoor";
-
-type StoreSession = {
-  webUrl?: string;
-  repoPath?: string;
-};
-
-type StoreData = {
-  sessions?: Record<string, StoreSession>;
-};
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -31,38 +20,26 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     await jwtVerify(token, SECRET);
 
-    // Get Scan Details
+    // Get Scan Details including sessionId
     const scan = await prisma.scan.findUnique({ where: { id } });
     if (!scan) return NextResponse.json({ error: "Scan not found" }, { status: 404 });
 
-    const { targetUrl, sourcePath } = scan;
+    const { sessionId } = scan;
 
-    // Find Session ID from store (same logic as status)
-    let sessionId = "";
-    if (fs.existsSync(STORE_PATH)) {
-      const store = JSON.parse(fs.readFileSync(STORE_PATH, "utf-8")) as StoreData;
-      const sessions = store.sessions || {};
-
-      console.log(`Searching for session matching: URL=${targetUrl}, Path=${sourcePath}`);
-      for (const [key, value] of Object.entries(sessions)) {
-        console.log(`Checking session ${key}: URL=${value.webUrl}, Path=${value.repoPath}`);
-        if (value.webUrl === targetUrl && value.repoPath === sourcePath) {
-          sessionId = key; // Use the full session ID for the deleteSession call
-          console.log(`Matched! sessionId=${sessionId}`);
-          break;
-        }
-      }
-    }
-
+    // Check if sessionId is available
     if (!sessionId) {
-      return NextResponse.json({ error: "Matching session not found in engine store" }, { status: 404 });
+      return NextResponse.json({
+        error: "Session ID not found for this scan. The scan may have been created before session tracking was implemented."
+      }, { status: 404 });
     }
 
-    // Execute cleanup command
-    const command = `npx zx ./dokodemodoor.mjs --cleanup --session ${sessionId}`;
-    console.log(`Executing Cleanup: ${command}`);
+    console.log(`[Cleanup] Using session ID from DB: ${sessionId}`);
+
+    // Execute cleanup command with session ID as argument (not --session flag)
+    const command = `npx zx ./dokodemodoor.mjs --cleanup ${sessionId}`;
+    console.log(`[Cleanup] Executing: ${command}`);
     const { stdout, stderr } = await execPromise(command, { cwd: ENGINE_DIR });
-    console.log(`Cleanup Output:`, { stdout, stderr });
+    console.log(`[Cleanup] Output:`, { stdout, stderr });
 
     // Update DB to reflect cleanup (set vulnerabilities to 0 since files are gone)
     await prisma.scan.update({
