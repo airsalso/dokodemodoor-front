@@ -1,0 +1,5 @@
+[ ] Map SQL Injection Sinks
+[ ] Trace Untrusted Data to Query Fragments
+[ ] Analyze Sanitization (bind, cast, whitelist)
+[ ] Check Concatenations & Formatting
+[ ] Document SQLi Findings (Analysis + Queue)
