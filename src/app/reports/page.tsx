@@ -41,7 +41,7 @@ interface LogNode {
 type MarkdownCodeProps = {
   className?: string;
   children?: React.ReactNode;
-  node?: any;
+  node?: unknown;
 } & React.HTMLAttributes<HTMLElement>;
 
 const syntaxTheme = oneLight as unknown as { [key: string]: CSSProperties };
@@ -234,7 +234,8 @@ const ReportViewer = ({
           remarkPlugins={[remarkGfm]}
           components={{
             code(props: MarkdownCodeProps) {
-              const { children, className, node, ...rest } = props;
+              const { children, className, node: _node, ...rest } = props;
+              void _node;
               const match = /language-(\w+)/.exec(className || '');
               const isInline = !match;
 
