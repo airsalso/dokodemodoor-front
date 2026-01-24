@@ -1,0 +1,6 @@
+[ ] Map Template Engine Renders (pug, ejs, etc.)
+[ ] Trace Untrusted Data to Template Sinks
+[ ] Verify Context (Engine type, API, Escape mode)
+[ ] Check Sanitization & Sandboxing
+[ ] Use Playwright to verify rendering behavior if needed
+[ ] Document SSTI Findings (Analysis + Queue)
