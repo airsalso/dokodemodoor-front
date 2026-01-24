@@ -1,0 +1,5 @@
+[ ] Map External Request Sources (fetch, axios, etc.)
+[ ] Analyze URL Parsing and Validation Logic
+[ ] Use Playwright to trigger and verify SSRF callbacks
+[ ] Verify Protocol/Host Allowlists
+[ ] Document SSRF Findings (Analysis + Queue)
