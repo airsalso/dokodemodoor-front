@@ -1,0 +1,8 @@
+[ ] Map Authentication & Session Flow
+[ ] Inventory API Endpoints
+[ ] Identify Role-Based Access
+[ ] Identify Input Vectors
+[ ] Map Network & Interaction Flow
+[ ] Identify Authorization Vulnerability Candidates
+[ ] Identify Injection Sources
+[ ] Generate Recon Deliverable
