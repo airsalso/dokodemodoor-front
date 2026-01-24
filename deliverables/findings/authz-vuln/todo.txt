@@ -1,3 +1,0 @@
-[ ] GET /api/reports/file?fileId=…
-[ ] POST /api/reports/register
-[ ] GET /api/scan/[id]/reports

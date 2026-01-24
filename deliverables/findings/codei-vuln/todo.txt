@@ -1,3 +1,0 @@
-[x] Report Translation: filePath [u]2192 potential CMDI-shell-string via child_process spawn
-[x] Report Translation: filePath [u]2192 potential Path Traversal validation
-[x] Report Translation: filePath [u]2192 potential SSRF via child process external requests

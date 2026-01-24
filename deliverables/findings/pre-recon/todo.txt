@@ -1,7 +1,0 @@
-[ ] Phase 1: Architecture Scanner
-[ ] Phase 1: Entry Point Mapper
-[ ] Phase 1: Security Pattern Hunter
-[ ] Phase 2: Injection & Dangerous Sink Hunter
-[ ] Phase 2: SSRF / Outbound Request Tracer
-[ ] Phase 2: Data Security Auditor
-[ ] Phase 3: Synthesis & Report

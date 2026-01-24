@@ -1,6 +1,0 @@
-[ ] Map Authentication Mechanisms and Flow
-[ ] Analyze Session Management and persistence
-[ ] Test for Credential Brute-force Protections
-[ ] Check MFA/2FA Implementation Flaws
-[ ] Use Playwright to test for session fixation/brute-force
-[ ] Document Authentication Vulnerabilities (Analysis + Queue)

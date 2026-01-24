@@ -1,5 +1,0 @@
-[ ] Map Sink Points for Stored XSS
-[ ] Identify Reflective XSS Vectors
-[ ] Use Playwright to verify XSS execution and CSP bypass
-[ ] Check for DOMPurify or custom sanitizers
-[ ] Document XSS Findings (Analysis + Queue)
