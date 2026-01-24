@@ -1,0 +1,5 @@
+[ ] Map File System Sinks (fs.readFile, etc.)
+[ ] Identify Untrusted Input to Path Params
+[ ] Check for Path Normalization/Bypass
+[ ] Verify exploitability via Playwright if network-accessible
+[ ] Document Path Injection Findings (Analysis + Queue)
