@@ -78,7 +78,7 @@ export async function POST(req: Request) {
 
     // Process vulnerabilities and reports
     // processScanFindings returns the CURRENT count from DB after adding new ones
-    const vulnCount = await processScanFindings(scanId, projectPath);
+    await processScanFindings(scanId, projectPath);
     await captureScanReports(scanId, projectPath);
 
     // Final safety check: sync the scan record count with the actual findings count

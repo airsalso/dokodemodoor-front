@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const { processScanFindings, captureScanReports } = require('./src/lib/scan-utils');
 const { prisma } = require('./src/lib/prisma');
 const path = require('path');
