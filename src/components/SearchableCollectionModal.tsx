@@ -59,39 +59,42 @@ export function SearchableCollectionModal({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-2xl bg-[#0f111a] border border-white/10 rounded-3xl overflow-hidden shadow-2xl flex flex-col h-full max-h-[85vh]"
+            className="relative w-full max-w-2xl modal-container bg-[#f0f9ff] backdrop-blur-2xl border border-blue-200 shadow-[0_32px_120px_-20px_rgba(30,58,138,0.3)] flex flex-col h-full max-h-[85vh] overflow-hidden rounded-[3rem]"
           >
+            {/* Red Top Border - Doraemon Collar */}
+            <div className="absolute top-0 left-0 right-0 h-2 bg-[#ef4444] z-50" />
+
             {/* Header */}
-            <div className="p-6 border-b border-white/5 bg-white/5 flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-black text-white">{title}</h2>
-                {description && <p className="text-xs text-gray-500 mt-1">{description}</p>}
+            <div className="px-10 py-8 border-b border-blue-100 bg-white/60 flex items-center justify-between relative overflow-hidden">
+              <div className="relative z-10">
+                <h2 className="text-3xl font-black text-slate-900 tracking-tight">{title}</h2>
+                {description && <p className="text-[11px] text-blue-600 font-bold uppercase tracking-[0.2em] mt-2 opacity-70">{description}</p>}
               </div>
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-white/5 rounded-xl transition-colors text-gray-500 hover:text-white"
+                className="relative z-10 p-4 rounded-3xl hover:bg-rose-50 transition-all text-slate-300 hover:text-rose-500 border border-transparent hover:border-rose-100"
               >
-                <X className="w-6 h-6" />
+                <X className="w-7 h-7" />
               </button>
             </div>
 
             {/* Search Bar */}
-            <div className="p-4 bg-white/5 border-b border-white/5 sticky top-0 z-10">
+            <div className="px-10 py-6 bg-white/20 border-b border-blue-100 sticky top-0 z-10">
               <div className="relative group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-primary transition-colors" />
+                <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-300 group-focus-within:text-blue-500 transition-colors" />
                 <input
                   type="text"
                   autoFocus
                   placeholder={placeholder}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full bg-black/40 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium"
+                  className="w-full bg-white border-2 border-blue-100 rounded-[2rem] pl-16 pr-8 py-5 text-slate-900 focus:outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10 transition-all font-black placeholder:text-blue-200 shadow-sm text-lg"
                 />
               </div>
             </div>
 
             {/* List */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-2">
+            <div className="flex-1 overflow-y-auto custom-scrollbar px-10 py-6 space-y-4">
               {filteredItems.length > 0 ? (
                 filteredItems.map((item) => (
                   <button
@@ -100,52 +103,69 @@ export function SearchableCollectionModal({
                       onSelect(item.id);
                       onClose();
                     }}
-                    className={`w-full p-4 rounded-2xl text-left transition-all flex items-center gap-4 group ${
+                    className={`w-full p-6 rounded-[2.5rem] text-left transition-all duration-300 flex items-center gap-6 group relative overflow-hidden ${
                       selectedValue === item.id
-                        ? "bg-primary/10 border border-primary/20"
-                        : "hover:bg-white/5 border border-transparent"
+                        ? "bg-white border-4 border-blue-400 shadow-[0_15px_40px_-10px_rgba(59,130,246,0.2)] scale-[1.02]"
+                        : "bg-white hover:bg-blue-50 border-4 border-transparent hover:border-blue-100 hover:shadow-lg"
                     }`}
                   >
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
-                      selectedValue === item.id ? "bg-primary text-white" : "bg-white/5 text-gray-400 group-hover:text-white"
+                    <div className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center flex-shrink-0 transition-all duration-500 relative z-10 ${
+                      selectedValue === item.id
+                        ? "bg-blue-500 text-white shadow-[0_10px_20px_rgba(59,130,246,0.3)]"
+                        : "bg-blue-50 text-blue-400 group-hover:scale-110 group-hover:bg-blue-100 shadow-inner"
                     }`}>
                       {item.icon}
                     </div>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className={`font-bold truncate ${selectedValue === item.id ? "text-primary" : "text-white"}`}>
+                    <div className="flex-1 min-w-0 relative z-10">
+                      <div className="flex items-center gap-3">
+                        <span className={`text-[19px] font-black tracking-tight transition-colors ${selectedValue === item.id ? "text-blue-600" : "text-slate-800"}`}>
                           {item.title}
                         </span>
-                        {selectedValue === item.id && <Check className="w-4 h-4 text-primary" />}
+                        {selectedValue === item.id && (
+                          <div className="bg-blue-500 rounded-full p-1.5 shadow-lg">
+                            <Check className="w-3.5 h-3.5 text-white stroke-[4px]" />
+                          </div>
+                        )}
                       </div>
                       {item.subtitle && (
-                        <p className="text-xs text-gray-500 truncate mt-0.5">{item.subtitle}</p>
+                        <p className={`text-sm font-bold truncate mt-1 transition-colors ${selectedValue === item.id ? "text-blue-400" : "text-slate-400"}`}>
+                          {item.subtitle}
+                        </p>
                       )}
                       {item.metadata && (
-                        <p className="text-[10px] text-gray-600 font-mono truncate mt-1 italic">{item.metadata}</p>
+                        <p className={`text-[11px] font-black uppercase tracking-widest font-mono truncate mt-3 px-3 py-1 rounded-full w-fit ${selectedValue === item.id ? "bg-blue-50 text-blue-500" : "bg-slate-100 text-slate-400"}`}>
+                          {item.metadata}
+                        </p>
                       )}
                     </div>
                   </button>
                 ))
               ) : (
-                <div className="flex flex-col items-center justify-center py-20 text-center opacity-50">
-                  <SearchX className="w-12 h-12 mb-4 text-gray-600" />
-                  <p className="text-gray-500 font-medium">{emptyMessage}</p>
+                <div className="flex flex-col items-center justify-center py-24 text-center">
+                  <div className="p-8 rounded-full bg-blue-50 mb-6">
+                    <SearchX className="w-16 h-16 text-blue-200" />
+                  </div>
+                  <p className="text-blue-300 font-black uppercase tracking-[0.4em] text-sm">{emptyMessage}</p>
                 </div>
               )}
             </div>
 
-            {/* Footer Summary */}
-            <div className="p-4 bg-black/40 border-t border-white/5 flex justify-between items-center px-6">
-              <span className="text-[10px] text-gray-600 uppercase font-black tracking-widest leading-none">
-                {filteredItems.length} items found
+            {/* Footer Summary - Yellow/Amber Theme */}
+            <div className="px-12 py-7 bg-[#ffcc00] border-t-4 border-amber-300 flex justify-between items-center relative overflow-hidden">
+              {/* Pattern for footer */}
+              <div className="absolute inset-0 opacity-10 pointer-events-none"
+                   style={{ backgroundImage: `radial-gradient(circle at 1.5px 1.5px, black 1.5px, transparent 0)`, backgroundSize: '15px 15px' }} />
+
+              <span className="relative z-10 text-xs text-amber-950 uppercase font-black tracking-[0.3em] flex items-center gap-4">
+                <div className="w-2.5 h-2.5 rounded-full bg-amber-950/40" />
+                {filteredItems.length} {filteredItems.length === 1 ? 'Record' : 'Records'} Found
               </span>
               <button
                 onClick={onClose}
-                className="text-xs font-bold text-gray-400 hover:text-white transition-colors"
+                className="relative z-10 px-10 py-4 rounded-[1.5rem] text-[13px] font-black uppercase tracking-[0.2em] text-amber-950 bg-white/40 hover:bg-white/60 transition-all border-2 border-amber-950/10 shadow-xl active:scale-95"
               >
-                Cancel
+                Close
               </button>
             </div>
           </motion.div>

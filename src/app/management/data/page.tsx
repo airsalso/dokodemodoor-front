@@ -133,7 +133,7 @@ export default function DataManagementPage() {
               <div className="flex items-center gap-4">
                 <input
                   type="number"
-                  className="w-32 bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-white focus:outline-none focus:border-primary/50"
+                  className="w-32 bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium"
                   value={dbSettings?.autoCleanupDays || 0}
                   onChange={e => setDbSettings({...dbSettings, autoCleanupDays: parseInt(e.target.value)})}
                 />

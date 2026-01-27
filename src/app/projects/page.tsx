@@ -247,7 +247,7 @@ export default function ProjectsPage() {
                             <Briefcase className="w-6 h-6" />
                             <span className="text-xs font-black uppercase tracking-[0.3em]">Workspace</span>
                         </div>
-                        <h1 className="text-4xl font-black text-white">Project Management</h1>
+                        <h1 className="text-4xl font-black text-foreground">Project Management</h1>
                         <p className="text-gray-500 max-w-xl">
                             Manage your local source code repositories. Register new projects by cloning from GitHub.
                         </p>
@@ -259,14 +259,14 @@ export default function ProjectsPage() {
                             <input
                                 type="text"
                                 placeholder="Search projects..."
-                                className="w-full bg-[#0a0c14] border border-white/10 rounded-xl pl-12 pr-4 py-4 text-base transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 text-white shadow-inner font-medium"
+                                className="w-full bg-input-bg border border-white/10 rounded-xl pl-12 pr-4 py-4 text-base transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground shadow-inner font-medium"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                             />
                         </div>
                         <button
                             onClick={() => setShowAddModal(true)}
-                            className="w-full md:w-auto px-8 py-4 bg-primary text-white rounded-xl font-black flex items-center justify-center gap-3 glow-primary hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/20 whitespace-nowrap"
+                            className="w-full md:w-auto px-10 py-4 btn-accent rounded-2xl font-black flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all whitespace-nowrap"
                         >
                             <Plus className="w-5 h-5" />
                             {t("new_project")}
@@ -353,8 +353,8 @@ export default function ProjectsPage() {
                                                 onClick={() => handlePageChange(i + 1)}
                                                 className={`w-12 h-12 rounded-xl border font-bold transition-all ${
                                                     currentPage === i + 1
-                                                        ? "bg-primary border-primary text-white glow-primary"
-                                                        : "glass-card border-white/10 text-gray-400 hover:bg-white/10 hover:text-white"
+                                                        ? "bg-primary border-primary text-primary-foreground glow-primary"
+                                                        : "glass-card border-white/10 text-muted-foreground hover:bg-white/10 hover:text-foreground"
                                                 }`}
                                             >
                                                 {i + 1}
@@ -391,7 +391,7 @@ export default function ProjectsPage() {
                             initial={{ opacity: 0, scale: 0.9, y: 30 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: 30 }}
-                            className="w-full max-w-xl glass-card relative bg-[#0a0c14] border-primary/20 shadow-2xl overflow-hidden z-10"
+                            className="w-full max-w-xl modal-container bg-card-muted relative border border-white/10 shadow-[0_32px_80px_-20px_rgba(0,0,0,0.4)] overflow-hidden z-10"
                         >
                             {/* Decorative background element */}
                             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
@@ -406,7 +406,12 @@ export default function ProjectsPage() {
                                         <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black">{registrationMode === 'git' ? "Clone from External Repository" : "Direct Local path registration"}</p>
                                     </div>
                                 </div>
-                                <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-white/5 rounded-xl transition-colors text-gray-500 hover:text-white"><X /></button>
+                                <button
+                                    onClick={() => setShowAddModal(false)}
+                                    className="p-3 rounded-2xl hover-btn-secondary transition-all text-muted-foreground hover:text-white"
+                                >
+                                    <X className="w-6 h-6" />
+                                </button>
                             </div>
 
                             <div className="px-8 pt-6">
@@ -416,14 +421,14 @@ export default function ProjectsPage() {
                                         onClick={() => setRegistrationMode('git')}
                                         className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-2xl transition-all duration-500 group relative overflow-hidden ${
                                             registrationMode === 'git'
-                                                ? "bg-primary text-white shadow-2xl shadow-primary/40 scale-[1.02]"
-                                                : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
+                                                ? "btn-accent shadow-xl shadow-amber-500/20"
+                                                : "text-muted-foreground hover:bg-white/5"
                                         }`}
                                     >
-                                        <div className={`transition-all duration-500 ${registrationMode === 'git' ? 'scale-110 text-white' : 'group-hover:scale-110 text-[#86efac]'}`}>
+                                        <div className={`transition-all duration-500 ${registrationMode === 'git' ? 'scale-110 text-foreground' : 'group-hover:scale-110 text-[#86efac]'}`}>
                                             <Github className="w-5 h-5" />
                                         </div>
-                                        <span className={`text-[14px] font-black uppercase tracking-[0.2em] transition-colors duration-500 ${registrationMode === 'git' ? 'text-white' : 'text-gray-500 group-hover:text-gray-300'}`}>
+                                        <span className={`text-[14px] font-black uppercase tracking-[0.2em] transition-colors duration-500 ${registrationMode === 'git' ? 'text-foreground' : 'text-gray-500 group-hover:text-gray-300'}`}>
                                             {t("git_clone")}
                                         </span>
                                         {registrationMode === 'git' && (
@@ -440,14 +445,14 @@ export default function ProjectsPage() {
                                         onClick={() => setRegistrationMode('manual')}
                                         className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-2xl transition-all duration-500 group relative overflow-hidden ${
                                             registrationMode === 'manual'
-                                                ? "bg-primary text-white shadow-2xl shadow-primary/40 scale-[1.02]"
-                                                : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
+                                                ? "btn-secondary shadow-xl shadow-rose-500/20"
+                                                : "text-muted-foreground hover:bg-white/5"
                                         }`}
                                     >
-                                        <div className={`transition-all duration-500 ${registrationMode === 'manual' ? 'scale-110 text-white' : 'group-hover:scale-110 text-[#93c5fd]'}`}>
+                                        <div className={`transition-all duration-500 ${registrationMode === 'manual' ? 'scale-110 text-foreground' : 'group-hover:scale-110 text-[#93c5fd]'}`}>
                                             <Briefcase className="w-5 h-5" />
                                         </div>
-                                        <span className={`text-[14px] font-black uppercase tracking-[0.2em] transition-colors duration-500 ${registrationMode === 'manual' ? 'text-white' : 'text-gray-500 group-hover:text-gray-300'}`}>
+                                        <span className={`text-[14px] font-black uppercase tracking-[0.2em] transition-colors duration-500 ${registrationMode === 'manual' ? 'text-foreground' : 'text-gray-500 group-hover:text-gray-300'}`}>
                                             {t("manual_registration")}
                                         </span>
                                         {registrationMode === 'manual' && (
@@ -474,7 +479,7 @@ export default function ProjectsPage() {
                                             value={newName}
                                             onChange={(e) => setNewName(e.target.value)}
                                             placeholder={deriveProjectName(registrationMode === 'git' ? newRepoUrl : manualPath, registrationMode) || "My Project Name"}
-                                            className="w-full bg-black/40 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium"
+                                            className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium"
                                         />
                                     </div>
                                 </div>
@@ -492,7 +497,7 @@ export default function ProjectsPage() {
                                                 value={newRepoUrl}
                                                 onChange={(e) => setNewRepoUrl(e.target.value)}
                                                 placeholder="https://github.com/username/project.git"
-                                                className="w-full bg-black/40 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium"
+                                                className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium"
                                             />
                                         </div>
                                     </div>
@@ -509,7 +514,7 @@ export default function ProjectsPage() {
                                                 value={manualPath}
                                                 onChange={(e) => setManualPath(e.target.value)}
                                                 placeholder="/var/www/my-project"
-                                                className="w-full bg-black/40 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium font-mono text-sm"
+                                                className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium font-mono text-sm"
                                             />
                                         </div>
                                         <p className="text-[10px] text-gray-600 mt-1 italic">
@@ -522,7 +527,7 @@ export default function ProjectsPage() {
                                     <button
                                         type="submit"
                                         disabled={actionLoading || (registrationMode === 'git' ? !newRepoUrl : !manualPath)}
-                                        className="w-full py-5 bg-primary text-white rounded-2xl font-black text-lg glow-primary flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+                                        className="w-full py-5 btn-accent rounded-2xl font-black text-lg flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
                                     >
                                         {actionLoading ? (
                                             <>
@@ -558,7 +563,7 @@ export default function ProjectsPage() {
                             initial={{ opacity: 0, scale: 0.9, y: 30 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: 30 }}
-                            className="w-full max-w-xl glass-card relative bg-[#0a0c14] border-primary/20 shadow-2xl overflow-hidden z-10"
+                            className="w-full max-w-xl modal-container bg-card-muted relative border border-white/10 shadow-[0_32px_80px_-20px_rgba(0,0,0,0.4)] overflow-hidden z-10"
                         >
                              <div className="p-8 border-b border-white/5 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
@@ -570,7 +575,12 @@ export default function ProjectsPage() {
                                         <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black">Update project details</p>
                                     </div>
                                 </div>
-                                <button onClick={() => setShowEditModal(false)} className="p-2 hover:bg-white/5 rounded-xl transition-colors text-gray-500 hover:text-white"><X /></button>
+                                <button
+                                    onClick={() => setShowEditModal(false)}
+                                    className="p-3 rounded-2xl hover-btn-secondary transition-all text-muted-foreground hover:text-white"
+                                >
+                                    <X className="w-6 h-6" />
+                                </button>
                             </div>
 
                             <form onSubmit={handleEditProject} className="p-8 space-y-6">
@@ -585,7 +595,7 @@ export default function ProjectsPage() {
                                             value={editName}
                                             onChange={(e) => setEditName(e.target.value)}
                                             placeholder={deriveProjectName(editPath, (selectedProject?.repoUrl ? 'git' : 'manual')) || "Project Name"}
-                                            className="w-full bg-black/40 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium"
+                                            className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium"
                                         />
                                     </div>
                                 </div>
@@ -603,7 +613,7 @@ export default function ProjectsPage() {
                                             disabled={!!selectedProject?.repoUrl && selectedProject?.repoUrl !== ""}
                                             value={editPath}
                                             onChange={(e) => setEditPath(e.target.value)}
-                                            className={`w-full bg-black/40 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium font-mono text-sm ${
+                                            className={`w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium font-mono text-sm ${
                                                 (!!selectedProject?.repoUrl && selectedProject?.repoUrl !== "") ? "opacity-50 cursor-not-allowed bg-white/[0.02]" : ""
                                             }`}
                                         />
@@ -619,7 +629,7 @@ export default function ProjectsPage() {
                                     <button
                                         type="submit"
                                         disabled={actionLoading}
-                                        className="w-full py-5 bg-primary text-white rounded-2xl font-black text-lg glow-primary flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+                                        className="w-full py-5 btn-accent rounded-2xl font-black text-lg flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
                                     >
                                         {actionLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : t("save_changes")}
                                     </button>
@@ -648,7 +658,8 @@ const ProjectCard = ({ project, onEdit, onDelete, onStartScan, actionLoading }: 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.98 }}
-            className="glass-card p-6 border-white/5 hover:border-primary/30 transition-all hover:bg-white/5 group"
+            onClick={onEdit}
+            className="glass-card p-6 border-white/5 hover:border-primary/30 transition-all hover:bg-white/5 group rounded-[2rem] cursor-pointer"
         >
             <div className="flex items-start justify-between gap-6">
                 {/* Left Section: Project Info + Repository Path */}
@@ -658,11 +669,12 @@ const ProjectCard = ({ project, onEdit, onDelete, onStartScan, actionLoading }: 
                             {project.repoUrl ? <Github className="w-7 h-7" /> : <HardDrive className="w-7 h-7" />}
                         </div>
                         <div className="flex flex-col min-w-0">
-                            <span className="font-black text-lg text-white mb-1">{project.name}</span>
+                            <span className="font-black text-lg text-foreground mb-1">{project.name}</span>
                             {project.repoUrl ? (
                                 <a
                                     href={project.repoUrl}
                                     target="_blank"
+                                    onClick={(e) => e.stopPropagation()}
                                     className="text-xs text-gray-500 hover:text-primary flex items-center gap-1.5 transition-colors font-medium truncate"
                                 >
                                     <Globe className="w-3 h-3 flex-shrink-0" />
@@ -699,22 +711,22 @@ const ProjectCard = ({ project, onEdit, onDelete, onStartScan, actionLoading }: 
 
                     <div className="flex items-center gap-2">
                         <button
-                            onClick={onStartScan}
+                            onClick={(e) => { e.stopPropagation(); onStartScan(); }}
                             className="p-3 rounded-xl bg-emerald-500/10 text-emerald-500 hover:text-white hover:bg-emerald-500/90 transition-all border border-emerald-500/20 hover:border-emerald-500/50"
                             title="Start Pentest"
                         >
                             <Terminal className="w-4 h-4" />
                         </button>
                         <button
-                            onClick={onEdit}
+                            onClick={(e) => { e.stopPropagation(); onEdit(); }}
                             className="p-3 rounded-xl bg-blue-500/10 text-blue-500 hover:text-white hover:bg-blue-500/90 transition-all border border-blue-500/20 hover:border-blue-500/50"
                             title="Edit Project"
                         >
                             <Settings className="w-4 h-4" />
                         </button>
-                        <button
-                            onClick={onDelete}
-                            className="p-3 rounded-xl bg-rose-500/10 text-rose-500 hover:text-white hover:bg-rose-500/90 transition-all border border-rose-500/20 hover:border-rose-500/50"
+                         <button
+                            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                            className="p-3 rounded-xl bg-rose-500/10 text-rose-500 hover:text-white hover-btn-secondary transition-all border border-rose-500/20 hover:border-rose-500/50"
                             title="Delete Project"
                             disabled={actionLoading}
                         >

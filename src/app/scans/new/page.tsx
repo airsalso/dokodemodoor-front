@@ -329,22 +329,23 @@ rules:
       <div className="max-w-3xl mx-auto px-6 py-20 w-full relative">
         <div className="absolute top-0 left-1/2 -z-10 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px] -translate-x-1/2 -translate-y-1/2" />
 
-        <Link
-          href="/scans"
-          className="group inline-flex items-center gap-3 px-4 py-2 bg-white/5 border border-white/10 rounded-2xl text-xs font-black uppercase tracking-widest text-gray-400 hover:text-primary hover:border-primary/30 hover:bg-primary/5 mb-12 transition-all active:scale-95"
-        >
-          <div className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-primary/10 group-hover:border-primary/30 transition-all">
-            <ChevronLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
-          </div>
-          {t('back to history') || 'Back to History'}
-        </Link>
 
-        <div className="mb-12 flex items-center justify-between gap-12">
-          <div className="flex-1 space-y-4">
-            <h1 className="text-5xl font-black text-white leading-none">Start New Pentest</h1>
-            <p className="text-gray-400 max-w-xl font-medium text-lg leading-relaxed">
-              Configure your targets and parameters for an automated security assessment.
-            </p>
+
+        <div className="mb-12 flex items-start justify-between gap-12">
+          <div className="flex items-start gap-6 flex-1">
+            <Link
+              href="/scans"
+              className="mt-1 group p-4 bg-rose-500/5 border border-rose-500/20 rounded-2xl text-rose-400 hover:text-white hover:bg-rose-500/20 hover:border-rose-500/40 transition-all active:scale-95 shadow-lg shadow-rose-500/5 hover:shadow-rose-500/10"
+              title={t('back to history') || 'Back to History'}
+            >
+              <ChevronLeft className="w-7 h-7 transition-transform group-hover:-translate-x-1" />
+            </Link>
+            <div className="space-y-4 min-w-0">
+              <h1 className="text-5xl font-black text-foreground leading-none">Start New Pentest</h1>
+              <p className="text-gray-400 max-w-xl font-medium text-lg leading-relaxed">
+                Configure your targets and parameters for an automated security assessment.
+              </p>
+            </div>
           </div>
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
@@ -413,7 +414,7 @@ rules:
                     <HardDrive className="w-7 h-7" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-white font-black text-lg truncate">
+                    <div className="text-foreground font-black text-lg truncate">
                       {projects.find(p => p.localPath === formData.sourcePath)?.name || "Select a Project"}
                     </div>
                     <div className="text-gray-500 text-xs font-mono truncate max-w-[400px]">
@@ -456,7 +457,7 @@ rules:
                     <FileCode className="w-7 h-7" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-white font-black text-lg truncate">
+                    <div className="text-foreground font-black text-lg truncate">
                       {formData.config || "Select a Profile"}
                     </div>
                     <div className="text-gray-500 text-xs font-mono truncate">
@@ -478,16 +479,16 @@ rules:
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-primary hover:bg-primary/90 text-white py-5 rounded-2xl font-extrabold text-xl flex items-center justify-center gap-3 transition-all glow-primary disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99]"
+            className="w-full btn-accent py-6 rounded-2xl font-black text-2xl flex items-center justify-center gap-4 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
           >
             {loading ? (
               <>
-                <Loader2 className="w-6 h-6 animate-spin" />
+                <Loader2 className="w-8 h-8 animate-spin" />
                 Initializing Engine...
               </>
             ) : (
               <>
-                <Play className="w-6 h-6 fill-white" />
+                <Play className="w-8 h-8 fill-current" />
                 Execute Pentest
               </>
             )}
@@ -509,21 +510,21 @@ rules:
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-2xl bg-[#0f111a] border border-white/10 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] z-10"
+              className="relative w-full max-w-2xl modal-container bg-card-muted border border-white/10 shadow-[0_32px_80px_-20px_rgba(0,0,0,0.4)] flex flex-col max-h-[90vh] overflow-hidden"
             >
-              <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/5">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-400">
-                    <Plus className="w-6 h-6" />
+              <div className="p-8 border-b border-white/5 flex items-center justify-between bg-white/5">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-400">
+                    <Plus className="w-7 h-7" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-black">{t('create_config')}</h2>
-                    <p className="text-xs text-gray-500">{t('config_desc')}</p>
+                    <h2 className="text-2xl font-black">{t('create_config')}</h2>
+                    <p className="text-xs text-muted-foreground uppercase tracking-widest font-black">{t('config_desc')}</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setShowNewModal(false)}
-                  className="p-2 hover:bg-white/5 rounded-xl transition-colors text-gray-500 hover:text-white"
+                  className="p-3 rounded-2xl hover-btn-secondary transition-all text-muted-foreground hover:text-white"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -542,7 +543,7 @@ rules:
                     value={newProfile.name || ""}
                     onChange={(e) => setNewProfile({ ...newProfile, name: e.target.value })}
                     placeholder={deriveProfileName(newProfile.content) || "my-custom-scan.yaml"}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all font-mono"
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all font-mono font-medium text-foreground"
                   />
                 </div>
                 <div className="space-y-2 flex-1 flex flex-col">
@@ -550,28 +551,28 @@ rules:
                   <textarea
                     value={newProfile.content || ""}
                     onChange={(e) => setNewProfile({ ...newProfile, content: e.target.value })}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl p-4 font-mono text-sm h-64 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all resize-none custom-scrollbar"
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 font-mono text-sm h-64 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all resize-none archive-scrollbar font-medium text-foreground"
                     spellCheck={false}
                   />
                 </div>
               </div>
 
-              <div className="p-6 bg-white/5 border-t border-white/5 flex gap-3">
+              <div className="p-8 bg-white/5 border-t border-white/5 flex gap-4">
                 <button
                   onClick={() => setShowNewModal(false)}
-                  className="flex-1 py-4 rounded-xl font-bold bg-white/5 hover:bg-white/10 transition-colors"
+                  className="flex-1 py-5 rounded-2xl font-black bg-white/5 text-muted-foreground hover-btn-secondary hover:text-white transition-all"
                 >
                   {t('cancel')}
                 </button>
                 <button
                   onClick={handleSaveConfig}
                   disabled={savingConfig}
-                  className="flex-[2] py-4 rounded-xl font-black bg-emerald-500 text-white hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.3)] disabled:opacity-50"
+                  className="flex-[2] py-5 rounded-2xl font-black btn-accent transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {savingConfig ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <Loader2 className="w-6 h-6 animate-spin" />
                   ) : (
-                    <Save className="w-5 h-5" />
+                    <Save className="w-6 h-6" />
                   )}
                   {t('save_config')}
                 </button>
@@ -595,21 +596,21 @@ rules:
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-2xl bg-[#0f111a] border border-white/10 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] z-10"
+              className="relative w-full max-w-2xl modal-container bg-card-muted border border-white/10 shadow-[0_32px_80px_-20px_rgba(0,0,0,0.4)] flex flex-col max-h-[90vh] overflow-hidden"
             >
-              <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/5">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center border border-accent/20 text-accent">
-                    <Plus className="w-6 h-6" />
+              <div className="p-8 border-b border-white/5 flex items-center justify-between bg-white/5">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center border border-accent/20 text-accent">
+                    <Plus className="w-7 h-7" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-black">{t('register_project')}</h2>
-                    <p className="text-xs text-gray-500">{registrationMode === 'git' ? 'Clone from External Repository' : 'Direct Local path registration'}</p>
+                    <h2 className="text-2xl font-black">{t('register_project')}</h2>
+                    <p className="text-xs text-muted-foreground uppercase tracking-widest font-black">{registrationMode === 'git' ? t('git_clone') : t('manual_registration')}</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setShowProjectModal(false)}
-                  className="p-2 hover:bg-white/5 rounded-xl transition-colors text-gray-500 hover:text-white"
+                  className="p-3 rounded-2xl hover-btn-secondary transition-all text-muted-foreground hover:text-white"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -621,21 +622,21 @@ rules:
                                         onClick={() => setRegistrationMode('git')}
                                         className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-2xl transition-all duration-500 group relative overflow-hidden ${
                                             registrationMode === 'git'
-                                                ? "bg-accent text-white shadow-2xl shadow-accent/40 scale-[1.02]"
-                                                : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
+                                                ? "btn-accent shadow-xl shadow-amber-500/20"
+                                                : "text-muted-foreground hover:bg-white/5"
                                         }`}
                                     >
-                                        <div className={`transition-all duration-500 ${registrationMode === 'git' ? 'scale-110 text-white' : 'group-hover:scale-110 text-[#86efac]'}`}>
+                                        <div className={`transition-all duration-500 ${registrationMode === 'git' ? 'scale-110 text-foreground' : 'group-hover:scale-110 text-[#86efac]'}`}>
                                             <Github className="w-5 h-5" />
                                         </div>
-                                        <span className={`text-[14px] font-black uppercase tracking-[0.2em] transition-colors duration-500 ${registrationMode === 'git' ? 'text-white' : 'text-gray-500 group-hover:text-gray-300'}`}>
+                                        <span className={`text-[14px] font-black uppercase tracking-[0.2em] transition-colors duration-500 ${registrationMode === 'git' ? 'text-foreground' : 'text-gray-500 group-hover:text-gray-300'}`}>
                                             {t("git_clone")}
                                         </span>
                                         {registrationMode === 'git' && (
                                             <motion.div
                                                 initial={{ x: '-100%', opacity: 0 }}
                                                 animate={{ x: '100%', opacity: 1 }}
-                                                className="absolute inset-0 bg-gradient-to-r from-accent/0 via-white/10 to-accent/0"
+                                                className="absolute inset-0 bg-gradient-to-r from-primary/0 via-white/10 to-primary/0"
                                                 transition={{ x: { duration: 1.5, repeat: Infinity, ease: "linear" }, opacity: { duration: 0.3 } }}
                                             />
                                         )}
@@ -645,21 +646,21 @@ rules:
                                         onClick={() => setRegistrationMode('manual')}
                                         className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-2xl transition-all duration-500 group relative overflow-hidden ${
                                             registrationMode === 'manual'
-                                                ? "bg-accent text-white shadow-2xl shadow-accent/40 scale-[1.02]"
-                                                : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
+                                                ? "btn-secondary shadow-xl shadow-rose-500/20"
+                                                : "text-muted-foreground hover:bg-white/5"
                                         }`}
                                     >
-                                        <div className={`transition-all duration-500 ${registrationMode === 'manual' ? 'scale-110 text-white' : 'group-hover:scale-110 text-[#93c5fd]'}`}>
+                                        <div className={`transition-all duration-500 ${registrationMode === 'manual' ? 'scale-110 text-foreground' : 'group-hover:scale-110 text-[#93c5fd]'}`}>
                                             <Briefcase className="w-5 h-5" />
                                         </div>
-                                        <span className={`text-[14px] font-black uppercase tracking-[0.2em] transition-colors duration-500 ${registrationMode === 'manual' ? 'text-white' : 'text-gray-500 group-hover:text-gray-300'}`}>
+                                        <span className={`text-[14px] font-black uppercase tracking-[0.2em] transition-colors duration-500 ${registrationMode === 'manual' ? 'text-foreground' : 'text-gray-500 group-hover:text-gray-300'}`}>
                                             {t("manual_registration")}
                                         </span>
                                         {registrationMode === 'manual' && (
                                             <motion.div
                                                 initial={{ x: '-100%', opacity: 0 }}
                                                 animate={{ x: '100%', opacity: 1 }}
-                                                className="absolute inset-0 bg-gradient-to-r from-accent/0 via-white/10 to-accent/0"
+                                                className="absolute inset-0 bg-gradient-to-r from-primary/0 via-white/10 to-primary/0"
                                                 transition={{ x: { duration: 1.5, repeat: Infinity, ease: "linear" }, opacity: { duration: 0.3 } }}
                                             />
                                         )}
@@ -723,23 +724,23 @@ rules:
                   )}
                 </div>
 
-                <div className="pt-4 flex gap-3">
+                <div className="pt-6 flex gap-4">
                   <button
                     type="button"
                     onClick={() => setShowProjectModal(false)}
-                    className="flex-1 py-4 rounded-xl font-bold bg-white/5 hover:bg-white/10 transition-colors"
+                    className="flex-1 py-5 rounded-2xl font-black bg-white/5 text-muted-foreground hover-btn-secondary hover:text-white transition-all"
                   >
                     {t('cancel')}
                   </button>
                   <button
                     type="submit"
                     disabled={projectActionLoading || (registrationMode === 'git' ? !newRepoUrl : !manualPath)}
-                    className="flex-[2] py-4 rounded-xl font-black bg-accent text-white hover:bg-accent/90 transition-all flex items-center justify-center gap-2 shadow-xl shadow-accent/20 disabled:opacity-50"
+                    className="flex-[2] py-5 rounded-2xl font-black btn-accent transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     {projectActionLoading ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <Loader2 className="w-6 h-6 animate-spin" />
                     ) : (
-                      <Save className="w-5 h-5" />
+                      <Save className="w-6 h-6" />
                     )}
                     {registrationMode === 'git' ? t('git_clone') : t('manual_registration')}
                   </button>

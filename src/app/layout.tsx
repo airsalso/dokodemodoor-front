@@ -52,7 +52,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`dark ${jetbrainsMono.variable} ${outfit.variable} ${inter.variable} ${noto.variable} ${roboto.variable}`}>
-      <body className="font-sans antialiased text-white">
+      <body className="font-sans antialiased text-foreground">
         <AuthProvider>
           <TokenRefreshProvider>
             <LanguageProvider>

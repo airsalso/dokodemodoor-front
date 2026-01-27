@@ -54,7 +54,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-[#05070a] relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-background relative overflow-hidden">
       {/* Background blobs */}
       <div className="absolute top-0 right-0 -z-10 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] translate-x-1/2 -translate-y-1/2" />
       <div className="absolute bottom-0 left-0 -z-10 w-[400px] h-[400px] bg-accent/10 rounded-full blur-[100px] -translate-x-1/2 translate-y-1/2" />
@@ -68,12 +68,12 @@ export default function RegisterPage() {
           <Link href="/" className="flex items-center gap-2 mb-8 transform hover:scale-110 transition-transform">
             <Logo className="w-20 h-20" />
           </Link>
-          <h1 className="text-3xl font-extrabold text-white">Create Account</h1>
+          <h1 className="text-3xl font-extrabold text-foreground">Create Account</h1>
           <p className="text-gray-400 mt-2">Join the future of penetration testing</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="glass-card p-8 space-y-6">
+          <div className="modal-container p-8 space-y-6 bg-card-muted border border-white/10 shadow-[0_32px_80px_-20px_rgba(0,0,0,0.4)]">
             {error && (
               <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-500 text-sm flex items-center gap-2">
                 <AlertCircle className="w-4 h-4" />
@@ -97,7 +97,7 @@ export default function RegisterPage() {
                 required
                 value={formData.username}
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium"
                 placeholder="Choose a username"
               />
             </div>
@@ -111,7 +111,7 @@ export default function RegisterPage() {
                 required
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium"
                 placeholder="••••••••"
               />
             </div>
@@ -125,7 +125,7 @@ export default function RegisterPage() {
                 required
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium"
                 placeholder="••••••••"
               />
             </div>
@@ -133,7 +133,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading || success}
-              className="w-full bg-primary hover:bg-primary/90 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all glow-primary disabled:opacity-50"
+              className="w-full btn-accent py-4 rounded-2xl font-black flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
             >
               {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <UserPlus className="w-5 h-5" />}
               Sign Up

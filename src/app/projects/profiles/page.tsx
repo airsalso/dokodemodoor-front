@@ -198,14 +198,14 @@ export default function ProfilesPage() {
                             <input
                                 type="text"
                                 placeholder="Search profiles..."
-                                className="w-full bg-[#0a0c14] border border-white/10 rounded-xl pl-12 pr-4 py-4 text-base transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 text-white shadow-inner font-medium"
+                                className="w-full bg-input-bg border border-white/10 rounded-xl pl-12 pr-4 py-4 text-base transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground shadow-inner font-medium"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                             />
                         </div>
                         <button
                             onClick={handleOpenAddModal}
-                            className="w-full md:w-auto px-8 py-4 bg-primary text-white rounded-xl font-black flex items-center justify-center gap-3 glow-primary hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/20 whitespace-nowrap"
+                            className="w-full md:w-auto px-10 py-4 btn-accent rounded-2xl font-black flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all whitespace-nowrap"
                         >
                             <Plus className="w-5 h-5" />
                             {t("create_config")}
@@ -317,12 +317,16 @@ export default function ProfilesPage() {
             {/* Registration Modal */}
             <AnimatePresence>
                 {showAddModal && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-xl">
+                    <div
+                        onClick={handleCloseModal}
+                        className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-xl cursor-pointer"
+                    >
                         <motion.div
+                            onClick={(e) => e.stopPropagation()}
                             initial={{ opacity: 0, scale: 0.9, y: 30 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: 30 }}
-                            className="w-full max-w-2xl glass-card relative bg-[#0a0c14] border-primary/20 shadow-2xl overflow-hidden"
+                            className="w-full max-w-2xl modal-container bg-card-muted relative border border-white/10 shadow-[0_32px_80px_-20px_rgba(0,0,0,0.4)] overflow-hidden cursor-default"
                         >
                             <div className="p-8 border-b border-white/5 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
@@ -334,7 +338,12 @@ export default function ProfilesPage() {
                                         <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black">{t("project_profiles")}</p>
                                     </div>
                                 </div>
-                                <button onClick={handleCloseModal} className="p-2 hover:bg-white/5 rounded-xl transition-colors text-gray-500 hover:text-white"><X /></button>
+                                <button
+                                    onClick={handleCloseModal}
+                                    className="p-3 rounded-2xl hover-btn-secondary transition-all text-muted-foreground hover:text-white"
+                                >
+                                    <X className="w-6 h-6" />
+                                </button>
                             </div>
 
                             <form onSubmit={handleSaveConfig} className="p-8 space-y-6">
@@ -347,7 +356,7 @@ export default function ProfilesPage() {
                                         onChange={(e) => setNewProfile({ ...newProfile, name: e.target.value })}
                                         placeholder="custom-profile.yaml"
                                         disabled={isEditing}
-                                        className={`w-full bg-black/40 border border-white/10 rounded-2xl px-4 py-4 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-mono ${isEditing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        className={`w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-mono font-medium ${isEditing ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     />
                                 </div>
 
@@ -357,7 +366,7 @@ export default function ProfilesPage() {
                                         required
                                         value={newProfile.content}
                                         onChange={(e) => setNewProfile({ ...newProfile, content: e.target.value })}
-                                        className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 font-mono text-sm h-64 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all resize-none custom-scrollbar"
+                                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 font-mono text-sm h-64 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all resize-none custom-scrollbar font-medium text-foreground"
                                         spellCheck={false}
                                     />
                                 </div>
@@ -366,14 +375,14 @@ export default function ProfilesPage() {
                                     <button
                                         type="button"
                                         onClick={handleCloseModal}
-                                        className="flex-1 py-5 bg-white/5 text-white rounded-2xl font-black hover:bg-white/10 transition-all"
+                                        className="flex-1 py-5 bg-white/5 text-muted-foreground rounded-2xl font-black hover-btn-secondary hover:text-white transition-all"
                                     >
                                         {t("cancel")}
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={actionLoading}
-                                        className="flex-[2] py-5 bg-primary text-white rounded-2xl font-black text-lg glow-primary flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+                                        className="flex-[2] py-5 btn-accent rounded-2xl font-black text-lg flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
                                     >
                                         {actionLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6" />}
                                         {t("save_config")}
@@ -387,10 +396,7 @@ export default function ProfilesPage() {
 
             <style jsx global>{`
                 .glass-card {
-                    @apply bg-white/[0.01] backdrop-blur-3xl border border-white/5 rounded-[32px] shadow-2xl;
-                }
-                .glow-primary {
-                    box-shadow: 0 8px 32px -8px rgba(var(--primary-rgb), 0.5);
+                    @apply bg-white/[0.01] backdrop-blur-3xl border border-white/5 rounded-[1.5rem] shadow-2xl;
                 }
             `}</style>
         </>
@@ -412,7 +418,8 @@ const ProfileCard = ({ filename, onEdit, onDelete, actionLoading }: ProfileCardP
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.98 }}
-            className="glass-card p-6 border-white/5 hover:border-primary/30 transition-all hover:bg-white/5 group"
+            onClick={onEdit}
+            className="glass-card p-6 border-white/5 hover:border-primary/30 transition-all hover:bg-white/5 group cursor-pointer"
         >
             <div className="flex items-center justify-between gap-6">
                 {/* Left Section: Profile Info */}
@@ -431,7 +438,7 @@ const ProfileCard = ({ filename, onEdit, onDelete, actionLoading }: ProfileCardP
                 {/* Right Section: Actions */}
                 <div className="flex items-center gap-2 flex-shrink-0">
                     <button
-                        onClick={onEdit}
+                        onClick={(e) => { e.stopPropagation(); onEdit(); }}
                         className="p-3 rounded-xl bg-blue-500/10 text-blue-500 hover:text-white hover:bg-blue-500/90 transition-all border border-blue-500/20 hover:border-blue-500/50"
                         title="Edit Profile"
                         disabled={actionLoading}
@@ -439,8 +446,8 @@ const ProfileCard = ({ filename, onEdit, onDelete, actionLoading }: ProfileCardP
                         <Edit2 className="w-4 h-4" />
                     </button>
                     <button
-                        onClick={onDelete}
-                        className="p-3 rounded-xl bg-rose-500/10 text-rose-500 hover:text-white hover:bg-rose-500/90 transition-all border border-rose-500/20 hover:border-rose-500/50"
+                        onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                        className="p-3 rounded-xl bg-rose-500/10 text-rose-500 hover:white hover-btn-secondary transition-all border border-rose-500/20 hover:border-rose-500/50"
                         title="Delete Profile"
                         disabled={actionLoading}
                     >

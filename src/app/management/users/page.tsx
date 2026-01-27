@@ -221,14 +221,14 @@ export default function UserManagementPage() {
               <input
                 type="text"
                 placeholder="Search by username..."
-                className="w-full bg-[#0a0c14] border border-white/10 rounded-xl pl-12 pr-4 py-4 text-base transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 text-white shadow-inner font-medium"
+                className="w-full bg-input-bg border border-white/10 rounded-xl pl-12 pr-4 py-4 text-base transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground shadow-inner font-medium"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
             <button
               onClick={() => { resetForm(); setShowModal('create'); }}
-              className="w-full md:w-auto px-8 py-4 bg-primary text-white rounded-xl font-black flex items-center justify-center gap-3 glow-primary hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/20 whitespace-nowrap"
+              className="w-full md:w-auto px-8 py-4 btn-accent rounded-2xl font-black flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-accent/20 whitespace-nowrap"
             >
               <Plus className="w-5 h-5" />
               Create User
@@ -328,7 +328,7 @@ export default function UserManagementPage() {
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative w-full max-w-lg glass-card p-10 border-primary/20 shadow-2xl"
+              className="relative w-full max-w-lg modal-container bg-card-muted p-10 border border-white/10 shadow-[0_32px_80px_-20px_rgba(0,0,0,0.4)]"
             >
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
@@ -337,7 +337,7 @@ export default function UserManagementPage() {
                   </div>
                   <h2 className="text-2xl font-black">{showModal === 'create' ? "Create New User" : "Edit User Profile"}</h2>
                 </div>
-                <button onClick={() => setShowModal(null)} className="p-2 rounded-xl hover:bg-white/10 text-gray-400 hover:text-white transition-colors">
+                <button onClick={() => setShowModal(null)} className="p-2 rounded-xl hover:bg-secondary text-muted-foreground hover:text-white transition-all">
                   <X />
                 </button>
               </div>
@@ -357,7 +357,7 @@ export default function UserManagementPage() {
                     <input
                       required
                       type="text"
-                      className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-4 text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium"
                       value={formData.username}
                       onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                       placeholder="Enter username"
@@ -374,7 +374,7 @@ export default function UserManagementPage() {
                     <input
                       required={showModal === 'create'}
                       type="password"
-                      className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-4 text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium"
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                       placeholder={showModal === 'edit' ? "Leave blank to keep current" : "Enter password"}
@@ -386,25 +386,25 @@ export default function UserManagementPage() {
                   <div className="space-y-2">
                     <label className="text-xs font-black uppercase tracking-widest text-gray-500">Role</label>
                     <select
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium"
                       value={formData.role}
                       onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                     >
-                      <option value="USER" className="bg-[#0f111a]">USER</option>
-                      <option value="SECURITY" className="bg-[#0f111a]">SECURITY</option>
-                      <option value="ADMIN" className="bg-[#0f111a]">ADMIN</option>
+                      <option value="USER" className="bg-card">USER</option>
+                      <option value="SECURITY" className="bg-card">SECURITY</option>
+                      <option value="ADMIN" className="bg-card">ADMIN</option>
                     </select>
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-black uppercase tracking-widest text-gray-500">Status</label>
                     <select
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium"
                       value={formData.status}
                       onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                     >
-                      <option value="ACTIVE" className="bg-[#0f111a]">ACTIVE</option>
-                      <option value="INACTIVE" className="bg-[#0f111a]">SUSPENDED</option>
-                      <option value="DELETED" className="bg-[#0f111a]">DELETED</option>
+                      <option value="ACTIVE" className="bg-card">ACTIVE</option>
+                      <option value="INACTIVE" className="bg-card">SUSPENDED</option>
+                      <option value="DELETED" className="bg-card">DELETED</option>
                     </select>
                   </div>
                 </div>
@@ -413,7 +413,7 @@ export default function UserManagementPage() {
                   <button
                     type="submit"
                     disabled={actionLoading}
-                    className="w-full py-5 bg-primary text-white rounded-2xl font-black text-lg glow-primary hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+                    className="w-full py-5 btn-accent rounded-2xl font-black text-lg flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
                   >
                     {actionLoading ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : (showModal === 'create' ? "Confirm Creation" : "Update Profile")}
                   </button>
@@ -443,13 +443,14 @@ const UserCard = ({ u, updating, getRoleBadge, getRoleIcon, getStatusBadge, onEd
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.98 }}
-      className="glass-card p-6 border-white/5 hover:border-primary/30 transition-all hover:bg-white/5 group"
+      onClick={onEdit}
+      className="glass-card p-6 border-white/5 hover:border-primary/30 transition-all hover:bg-white/5 group rounded-[1.5rem] cursor-pointer"
     >
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
           <div className={`w-12 h-12 rounded-xl bg-gradient-to-br border flex items-center justify-center font-bold relative text-lg ${u.status === 'ACTIVE' ? 'from-white/10 to-transparent border-white/10 text-primary' : 'from-gray-800 to-transparent border-white/5 text-gray-600'}`}>
             {u.username[0].toUpperCase()}
-            {u.status === 'ACTIVE' && <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-[#05070a] shadow-lg shadow-emerald-500/20" />}
+            {u.status === 'ACTIVE' && <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-background shadow-lg shadow-emerald-500/20" />}
           </div>
           <div className="flex flex-col">
             <span className={`font-black text-lg mb-0.5 ${u.status === 'ACTIVE' ? 'text-white' : 'text-gray-500 line-through'}`}>{u.username}</span>
@@ -483,15 +484,15 @@ const UserCard = ({ u, updating, getRoleBadge, getRoleIcon, getStatusBadge, onEd
             ) : (
               <>
                 <button
-                  onClick={onEdit}
+                  onClick={(e) => { e.stopPropagation(); onEdit(); }}
                   className="p-3 rounded-xl bg-blue-500/10 text-blue-500 hover:text-white hover:bg-blue-500/90 transition-all border border-blue-500/20 hover:border-blue-500/50"
                   title="Edit User"
                 >
                   <Edit2 className="w-4 h-4" />
                 </button>
-                <button
-                  onClick={onDelete}
-                  className="p-3 rounded-xl bg-rose-500/10 text-rose-500 hover:text-white hover:bg-rose-500/90 transition-all border border-rose-500/20 hover:border-rose-500/50"
+                 <button
+                  onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                  className="p-3 rounded-xl bg-rose-500/10 text-rose-500 hover:text-white hover-btn-secondary transition-all border border-rose-500/20 hover:border-rose-500/50"
                   title="Delete User"
                 >
                   <Trash2 className="w-4 h-4" />

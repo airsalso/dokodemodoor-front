@@ -215,7 +215,7 @@ export default function ScansHistory() {
               <Search className="w-6 h-6" />
               <span className="text-xs font-black uppercase tracking-[0.3em]">Scan Management</span>
             </div>
-            <h1 className="text-4xl font-black text-white">{t("scans_title")}</h1>
+            <h1 className="text-4xl font-black text-foreground">{t("scans_title")}</h1>
             <p className="text-gray-500 max-w-xl">
               {language === "ko" ? "모든 자동화된 보안 평가 기록을 관리합니다." : "Manage all automated security assessment records."}
             </p>
@@ -223,7 +223,7 @@ export default function ScansHistory() {
           {user?.role !== 'USER' && (
             <Link
               href="/scans/new"
-              className="w-full md:w-auto px-8 py-4 bg-primary text-white rounded-xl font-black flex items-center justify-center gap-3 glow-primary hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/20 whitespace-nowrap"
+              className="w-full md:w-auto px-10 py-4 btn-accent rounded-2xl font-black flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all whitespace-nowrap"
             >
               <Plus className="w-5 h-5" />
               {t("start_new_scan")}
@@ -241,7 +241,7 @@ export default function ScansHistory() {
               placeholder={t("search_placeholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-[#0a0c14] border border-white/10 rounded-xl pl-12 pr-4 py-4 text-base focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium text-white shadow-inner"
+              className="w-full bg-input-bg border border-white/10 rounded-xl pl-12 pr-4 py-4 text-base focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium text-foreground shadow-inner"
             />
           </form>
 
@@ -249,7 +249,7 @@ export default function ScansHistory() {
           <div className="relative">
             <button
               onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-              className="px-6 py-4 bg-[#0a0c14] border border-white/10 rounded-xl text-sm font-bold flex items-center gap-3 hover:bg-white/5 transition-all text-white min-w-[180px] justify-between"
+              className="px-6 py-4 bg-input-bg border border-white/10 rounded-xl text-sm font-bold flex items-center gap-3 hover:bg-white/5 transition-all text-foreground min-w-[180px] justify-between"
             >
               <div className="flex items-center gap-2">
                 <Filter className="w-4 h-4 text-primary" />
@@ -300,18 +300,20 @@ export default function ScansHistory() {
               setStatusFilter("all");
               setCurrentPage(1);
             }}
-            className={`glass-card px-4 py-3 border-white/5 transition-all flex items-center gap-3 cursor-pointer active:scale-95 hover:border-primary/50 ${
-              statusFilter === 'all' ? 'border-primary/50 bg-primary/5 ring-1 ring-primary/20' : 'hover:bg-white/5'
+            className={`px-5 py-4 rounded-2xl border transition-all flex items-center gap-4 cursor-pointer active:scale-95 ${
+              statusFilter === 'all'
+                ? 'bg-blue-500/20 border-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.2)]'
+                : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10'
             }`}
           >
-            <div className={`w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-transparent border flex items-center justify-center flex-shrink-0 transition-colors ${
-              statusFilter === 'all' ? 'border-primary/50 text-primary' : 'border-primary/20 text-primary opacity-70'
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
+              statusFilter === 'all' ? 'bg-blue-500 text-white shadow-lg' : 'bg-blue-500/10 text-blue-400'
             }`}>
-              <Activity className="w-5 h-5" />
+              <Activity className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-xl font-black text-white leading-none">{totalCounts.total}</p>
-              <p className={`text-[9px] font-bold uppercase tracking-wider ${statusFilter === 'all' ? 'text-primary' : 'text-gray-500'}`}>Total</p>
+              <p className="text-2xl font-black text-white leading-none mb-1">{totalCounts.total}</p>
+              <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${statusFilter === 'all' ? 'text-blue-300' : 'text-gray-500'}`}>Total</p>
             </div>
           </motion.div>
 
@@ -323,20 +325,22 @@ export default function ScansHistory() {
               setStatusFilter("running");
               setCurrentPage(1);
             }}
-            className={`glass-card px-4 py-3 border-white/5 transition-all flex items-center gap-3 cursor-pointer active:scale-95 hover:border-blue-500/50 ${
-              statusFilter === 'running' ? 'border-blue-500/50 bg-blue-500/5 ring-1 ring-blue-500/20' : 'hover:bg-white/5'
+            className={`px-5 py-4 rounded-2xl border transition-all flex items-center gap-4 cursor-pointer active:scale-95 ${
+              statusFilter === 'running'
+                ? 'bg-amber-500/20 border-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.2)]'
+                : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10'
             }`}
           >
-            <div className={`w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500/20 to-transparent border flex items-center justify-center flex-shrink-0 transition-colors ${
-              statusFilter === 'running' ? 'border-blue-500/50 text-blue-500' : 'border-blue-500/20 text-blue-500 opacity-70'
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
+              statusFilter === 'running' ? 'bg-amber-500 text-white shadow-lg' : 'bg-amber-500/10 text-amber-400'
             }`}>
-              <Clock className="w-5 h-5" />
+              <Clock className="w-6 h-6 animate-pulse" />
             </div>
             <div>
-              <p className="text-xl font-black text-white leading-none">
+              <p className="text-2xl font-black text-white leading-none mb-1">
                 {totalCounts.running + (totalCounts.translating || 0)}
               </p>
-              <p className={`text-[9px] font-bold uppercase tracking-wider ${statusFilter === 'running' ? 'text-blue-500' : 'text-gray-500'}`}>Active</p>
+              <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${statusFilter === 'running' ? 'text-amber-300' : 'text-gray-500'}`}>Active</p>
             </div>
           </motion.div>
 
@@ -348,20 +352,22 @@ export default function ScansHistory() {
               setStatusFilter("completed");
               setCurrentPage(1);
             }}
-            className={`glass-card px-4 py-3 border-white/5 transition-all flex items-center gap-3 cursor-pointer active:scale-95 hover:border-emerald-500/50 ${
-              statusFilter === 'completed' ? 'border-emerald-500/50 bg-emerald-500/5 ring-1 ring-emerald-500/20' : 'hover:bg-white/5'
+            className={`px-5 py-4 rounded-2xl border transition-all flex items-center gap-4 cursor-pointer active:scale-95 ${
+              statusFilter === 'completed'
+                ? 'bg-emerald-500/20 border-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.2)]'
+                : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10'
             }`}
           >
-            <div className={`w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500/20 to-transparent border flex items-center justify-center flex-shrink-0 transition-colors ${
-              statusFilter === 'completed' ? 'border-emerald-500/50 text-emerald-500' : 'border-emerald-500/20 text-emerald-500 opacity-70'
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
+              statusFilter === 'completed' ? 'bg-emerald-500 text-white shadow-lg' : 'bg-emerald-500/10 text-emerald-400'
             }`}>
-              <CheckCircle2 className="w-5 h-5" />
+              <CheckCircle2 className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-xl font-black text-white leading-none">
+              <p className="text-2xl font-black text-white leading-none mb-1">
                 {totalCounts.completed}
               </p>
-              <p className={`text-[9px] font-bold uppercase tracking-wider ${statusFilter === 'completed' ? 'text-emerald-500' : 'text-gray-500'}`}>Done</p>
+              <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${statusFilter === 'completed' ? 'text-emerald-300' : 'text-gray-500'}`}>Done</p>
             </div>
           </motion.div>
 
@@ -373,20 +379,22 @@ export default function ScansHistory() {
               setStatusFilter("failed");
               setCurrentPage(1);
             }}
-            className={`glass-card px-4 py-3 border-white/5 transition-all flex items-center gap-3 cursor-pointer active:scale-95 hover:border-rose-500/50 ${
-              statusFilter === 'failed' ? 'border-rose-500/50 bg-rose-500/5 ring-1 ring-rose-500/20' : 'hover:bg-white/5'
+            className={`px-5 py-4 rounded-2xl border transition-all flex items-center gap-4 cursor-pointer active:scale-95 ${
+              statusFilter === 'failed'
+                ? 'bg-rose-500/20 border-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.2)]'
+                : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10'
             }`}
           >
-            <div className={`w-10 h-10 rounded-lg bg-gradient-to-br from-rose-500/20 to-transparent border flex items-center justify-center flex-shrink-0 transition-colors ${
-              statusFilter === 'failed' ? 'border-rose-500/50 text-rose-500' : 'border-rose-500/20 text-rose-500 opacity-70'
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
+              statusFilter === 'failed' ? 'bg-rose-500 text-white shadow-lg' : 'bg-rose-500/10 text-rose-400'
             }`}>
-              <XCircle className="w-5 h-5" />
+              <XCircle className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-xl font-black text-white leading-none">
+              <p className="text-2xl font-black text-white leading-none mb-1">
                 {totalCounts.failed}
               </p>
-              <p className={`text-[9px] font-bold uppercase tracking-wider ${statusFilter === 'failed' ? 'text-rose-500' : 'text-gray-500'}`}>Failed</p>
+              <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${statusFilter === 'failed' ? 'text-rose-300' : 'text-gray-500'}`}>Failed</p>
             </div>
           </motion.div>
         </div>
@@ -509,11 +517,11 @@ const ScanCard = React.memo(({ scan, isActive, t, language, formatDuration, user
 
           {/* Center: Target Info */}
           <div className="flex-1 min-w-0">
-            <h3 className="font-black text-xl text-white group-hover:text-primary transition-colors mb-1 truncate">
-              {scan.target || scan.targetUrl}
+            <h3 className="font-black text-xl text-foreground group-hover:text-primary transition-colors mb-1 truncate">
+              {scan.projectName || scan.id}
             </h3>
             <p className="text-sm text-gray-400 font-mono tracking-tight truncate opacity-90">
-              {scan.projectName ? `${scan.projectName} - ${scan.id}` : scan.id}
+              {scan.target || scan.targetUrl} {scan.projectName && `(${scan.id})`}
             </p>
           </div>
 
@@ -549,7 +557,7 @@ const ScanCard = React.memo(({ scan, isActive, t, language, formatDuration, user
             {/* Duration */}
             <div className="flex flex-col items-center min-w-[100px]">
               <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1.5 opacity-70">Duration</p>
-              <p className="text-sm font-bold text-gray-200">
+              <p className="text-sm font-bold text-amber-400">
                   {(() => {
                     if (scan.duration) return formatDuration(scan.duration);
                     if (scan.endTime && scan.startTime) {

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from "react";
-import { themeDetails } from "@/lib/constants";
+import { themeDetails, themes } from "@/lib/constants";
 import { hexToRgb } from "@/lib/utils";
 import { useAuth } from "./AuthContext";
 
@@ -22,9 +22,9 @@ interface AppearanceContextType {
 const AppearanceContext = createContext<AppearanceContextType | undefined>(undefined);
 
 export function AppearanceProvider({ children }: { children: ReactNode }) {
-  const [themeColor, setThemeColorState] = useState<string>("#8b5cf6");
+  const [themeColor, setThemeColorState] = useState<string>("#60a5fa");
   const [accentColor, setAccentColorState] = useState<string>("#3b82f6");
-  const [terminalTheme, setTerminalThemeState] = useState<string>("bright");
+  const [terminalTheme, setTerminalThemeState] = useState<string>("doraemon");
   const [terminalFont, setTerminalFontState] = useState<string>("jetbrains");
   const [themeFont, setThemeFontState] = useState<string>("outfit");
   const [isLoadingAppearance, setIsLoadingAppearance] = useState(true);
@@ -33,6 +33,15 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
   const applyTheme = useCallback((color: string) => {
     if (!color) return;
     const normalizedColor = color.toLowerCase();
+
+    // Find theme ID from themes array for data-theme attribute
+    const themeInfo = themes.find(t => t.color.toLowerCase() === normalizedColor);
+    if (themeInfo) {
+      document.documentElement.setAttribute("data-theme", themeInfo.id);
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+    }
+
     const theme = themeDetails[normalizedColor] || {
       primary: color,
       accent: "#3b82f6",
@@ -52,6 +61,18 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
     style.setProperty("--accent-rgb", hexToRgb(theme.accent));
     style.setProperty("--background", theme.bg);
     style.setProperty("--card", theme.card);
+
+    // Light/Dark mode support
+    style.setProperty("--foreground", theme.foreground || "#f8fafc");
+    style.setProperty("--border", theme.border || "#1e293b");
+    style.setProperty("--card-foreground", theme.cardForeground || "#f8fafc");
+    style.setProperty("--muted-foreground", theme.mutedForeground || "#94a3b8");
+    style.setProperty("--input-bg", theme.inputBg || "#0a0c14");
+    style.setProperty("--card-muted", theme.cardMuted || "#0a0c14");
+    style.setProperty("--primary-foreground", theme.primaryForeground || "#f8fafc");
+    style.setProperty("--navbar-bg", theme.navbarBg || "transparent");
+    style.setProperty("--navbar-fg", theme.navbarForeground || "inherit");
+    style.setProperty("--secondary", theme.secondary || "#ef4444");
   }, []);
 
   const setThemeColor = useCallback((color: string) => {
@@ -94,7 +115,7 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
   // Initial load from LocalStorage to avoid flickers
   useEffect(() => {
     const savedTheme = localStorage.getItem("themeColor");
-    applyTheme(savedTheme || "#8b5cf6");
+    applyTheme(savedTheme || "#60a5fa");
 
     const savedTermTheme = localStorage.getItem("terminalTheme");
     if (savedTermTheme) setTerminalThemeState(savedTermTheme);

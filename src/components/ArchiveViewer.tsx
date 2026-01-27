@@ -31,7 +31,7 @@ type MarkdownCodeProps = {
 export function ArchiveViewer({ scanId, initialLogs }: ArchiveViewerProps) {
   const { terminalTheme } = useAppearance();
   const currentTheme = TERMINAL_THEMES[terminalTheme] || TERMINAL_THEMES.bright;
-  const isBright = terminalTheme === "bright" || terminalTheme === "beige";
+  const isBright = ["bright", "beige", "doraemon"].includes(terminalTheme);
 
   const [reports, setReports] = useState<ArchiveReport[]>([]);
   const [loading, setLoading] = useState(true);
@@ -139,7 +139,7 @@ export function ArchiveViewer({ scanId, initialLogs }: ArchiveViewerProps) {
                       : "text-gray-400 hover:bg-white/5"
                   }`}
                 >
-                  <Terminal className={`w-4 h-4 ${selectedReportId === "logs" ? "text-white" : "text-primary/70"}`} />
+                  <Terminal className={`w-4 h-4 ${selectedReportId === "logs" ? "text-primary-foreground" : "text-primary/70"}`} />
                   <span className="font-bold tracking-tight">Terminal Output</span>
                   {selectedReportId === "logs" && (
                     <motion.div layoutId="active-pill" className="absolute right-3 w-1.5 h-1.5 rounded-full bg-white shadow-sm" />
@@ -161,13 +161,13 @@ export function ArchiveViewer({ scanId, initialLogs }: ArchiveViewerProps) {
                     onClick={() => setSelectedReportId(report.id)}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm transition-all group relative overflow-hidden border ${
                       selectedReportId === report.id
-                        ? (isBright ? "bg-white text-gray-900 border-gray-200 shadow-sm" : "bg-white/10 text-white border-white/10")
-                        : (isBright ? "text-gray-500 hover:bg-white/40 border-transparent" : "text-gray-400 hover:bg-white/5 border-transparent")
+                        ? (isBright ? "bg-white text-foreground border-gray-200 shadow-sm" : "bg-white/10 text-foreground border-white/10")
+                        : (isBright ? "text-muted-foreground hover:bg-white/40 border-transparent" : "text-muted-foreground hover:bg-white/5 border-transparent")
                     }`}
                   >
                     <div className={`p-1.5 rounded-lg transition-colors ${
                       selectedReportId === report.id
-                        ? (isBright ? "bg-primary text-white" : "bg-primary/20 text-primary")
+                        ? (isBright ? "bg-primary text-primary-foreground" : "bg-primary/20 text-primary")
                         : (isBright ? "bg-gray-100 text-gray-400 group-hover:bg-gray-200" : "bg-white/5 text-gray-600 group-hover:text-gray-400")
                     }`}>
                       {report.type === 'md' ? <FileText className="w-3.5 h-3.5" /> : <FileCode className="w-3.5 h-3.5" />}
@@ -210,7 +210,7 @@ export function ArchiveViewer({ scanId, initialLogs }: ArchiveViewerProps) {
               <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Current Artifact</span>
             </div>
             <h3 className={`text-sm font-black tracking-widest flex items-center gap-3 uppercase transition-colors duration-500 ${
-              isBright ? 'text-gray-800' : 'text-white'
+              isBright ? "text-foreground" : "text-white"
             }`}>
               {selectedReportId === "logs" ? "SYSTEM_AUDIT_TERMINAL.log" : selectedReport?.filename}
               <div className={`px-2 py-0.5 rounded-md text-[9px] font-mono transition-colors duration-500 ${
@@ -257,9 +257,9 @@ export function ArchiveViewer({ scanId, initialLogs }: ArchiveViewerProps) {
                   </pre>
                 </div>
               ) : selectedReport?.type === 'md' ? (
-                <div className="p-12 max-w-5xl mx-auto">
+                <div className="p-6 md:p-10 w-full">
                   <div
-                    className={`px-10 py-12 rounded-[2.5rem] shadow-2xl relative overflow-hidden border transition-all duration-500 ${
+                    className={`px-8 md:px-12 py-12 rounded-[2.5rem] shadow-2xl relative overflow-hidden border transition-all duration-500 ${
                       isBright ? 'border-gray-100 bg-white' : 'border-white/5 bg-white/[0.02]'
                     }`}
                     style={{ backgroundColor: isBright ? currentTheme.background : undefined }}
@@ -272,17 +272,32 @@ export function ArchiveViewer({ scanId, initialLogs }: ArchiveViewerProps) {
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         components={{
-                          h1: (props) => <h1 className={`text-4xl font-black mb-8 border-b pb-4 tracking-tighter transition-colors ${isBright ? 'text-gray-900 border-gray-200' : 'text-white border-primary/20'}`} {...props} />,
-                          h2: (props) => <h2 className={`text-2xl font-black mt-12 mb-6 tracking-tight flex items-center gap-3 before:w-1 before:h-6 before:bg-primary before:rounded-full transition-colors ${isBright ? 'text-gray-800' : 'text-white'}`} {...props} />,
-                          h3: (props) => <h3 className={`text-xl font-bold mt-8 mb-4 tracking-tight transition-colors ${isBright ? 'text-gray-700' : 'text-white/90'}`} {...props} />,
-                          p: (props) => <p className={`leading-8 mb-6 font-medium transition-colors ${isBright ? 'text-gray-600' : 'text-gray-400'}`} {...props} />,
-                          ul: (props) => <ul className="mb-6 space-y-2" {...props} />,
+                          h1: (props) => <h1 className={`text-4xl font-black mb-8 border-b-4 pb-4 tracking-tighter transition-colors ${isBright ? 'text-foreground border-primary/20' : 'text-white border-primary/20'}`} {...props} />,
+                          h2: (props) => <h2 className={`text-3xl font-black mt-12 mb-6 tracking-tight flex items-center gap-3 before:w-1.5 before:h-8 before:bg-primary before:rounded-full transition-colors ${isBright ? 'text-foreground' : 'text-white'}`} {...props} />,
+                          h3: (props) => <h3 className={`text-2xl font-black mt-10 mb-5 tracking-tight transition-colors ${isBright ? 'text-foreground' : 'text-white/90'}`} {...props} />,
+                          h4: (props) => <h4 className={`text-xl font-bold mt-8 mb-4 tracking-tight transition-colors ${isBright ? 'text-foreground' : 'text-white/80'}`} {...props} />,
+                          p: (props) => <p className={`leading-relaxed mb-6 font-medium text-lg transition-colors ${isBright ? 'text-gray-700' : 'text-gray-300'}`} {...props} />,
+                          ul: (props) => <ul className="mb-8 ml-4 space-y-3" {...props} />,
+                          ol: (props) => <ol className="mb-8 ml-4 list-decimal space-y-3" {...props} />,
                           li: (props) => (
-                             <li className={`flex gap-3 font-medium leading-relaxed transition-colors ${isBright ? 'text-gray-600' : 'text-gray-400'}`}>
-                               <span className="text-primary mt-1.5 shrink-0">●</span>
-                               <span {...props} />
+                             <li className={`flex gap-3 font-medium text-lg leading-relaxed transition-colors ${isBright ? 'text-gray-700' : 'text-gray-300'}`}>
+                               <span className="text-primary mt-2 shrink-0 text-sm">●</span>
+                               <span className="flex-1" {...props} />
                              </li>
                           ),
+                          blockquote: (props) => (
+                            <blockquote className={`pl-6 py-2 border-l-4 italic mb-8 rounded-r-xl transition-colors ${isBright ? 'bg-gray-50 border-gray-300 text-gray-600' : 'bg-white/5 border-primary/40 text-gray-400'}`} {...props} />
+                          ),
+                          hr: () => <hr className={`my-12 border-t-2 transition-colors ${isBright ? 'border-gray-100' : 'border-white/5'}`} />,
+                          table: (props) => (
+                            <div className="overflow-x-auto mb-8 rounded-2xl border border-white/10">
+                              <table className="w-full border-collapse" {...props} />
+                            </div>
+                          ),
+                          thead: (props) => <thead className={`${isBright ? 'bg-gray-50' : 'bg-white/5'}`} {...props} />,
+                          th: (props) => <th className={`px-6 py-4 text-left text-sm font-black uppercase tracking-wider border-b transition-colors ${isBright ? 'border-gray-200 text-gray-700' : 'border-white/10 text-gray-300'}`} {...props} />,
+                          td: (props) => <td className={`px-6 py-4 text-sm border-b transition-colors ${isBright ? 'border-gray-100 text-gray-600' : 'border-white/5 text-gray-400'}`} {...props} />,
+                          a: (props) => <a className="text-primary hover:underline font-bold" target="_blank" rel="noopener noreferrer" {...props} />,
                           code({ inline, className, children, ...props }: MarkdownCodeProps) {
                             const { style: _style, ...rest } = props;
                             void _style;
@@ -305,9 +320,9 @@ export function ArchiveViewer({ scanId, initialLogs }: ArchiveViewerProps) {
                                     customStyle={{
                                       margin: 0,
                                       padding: '1.5rem',
-                                      fontSize: '13px',
-                                      backgroundColor: isBright ? '#f8f9fa' : 'transparent',
-                                      lineHeight: '1.6',
+                                      fontSize: '14px',
+                                      backgroundColor: isBright ? '#ffffff' : 'transparent',
+                                      lineHeight: '1.7',
                                     }}
                                     {...rest}
                                   >
@@ -318,9 +333,9 @@ export function ArchiveViewer({ scanId, initialLogs }: ArchiveViewerProps) {
                             }
                             return (
                               <code
-                                className={`${className} px-2 py-1 rounded text-primary-light font-mono text-[0.9em] border transition-all ${
+                                className={`${className} px-2 py-0.5 rounded text-primary font-mono text-[0.9em] border transition-all ${
                                   isBright
-                                    ? 'bg-gray-100 border-gray-200 text-primary-dark'
+                                    ? 'bg-gray-100 border-gray-200'
                                     : 'bg-white/5 border-white/10'
                                 }`}
                                 {...props}

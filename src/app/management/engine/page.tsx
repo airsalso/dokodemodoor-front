@@ -127,7 +127,7 @@ export default function EngineManagementPage() {
               <input
                 type="text"
                 placeholder="Search environment variables..."
-                className="w-full bg-black/20 border border-white/5 rounded-xl pl-11 pr-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3.5 text-sm ring-2 ring-primary/20 focus:outline-none focus:ring-primary/50 text-white placeholder:text-gray-400 font-medium transition-all"
                 value={envSearch}
                 onChange={e => setEnvSearch(e.target.value)}
               />
@@ -138,16 +138,17 @@ export default function EngineManagementPage() {
                   const key = prompt("Enter new ENV key:");
                   if (key) setEngineEnv({...engineEnv, [key.toUpperCase()]: ""});
                 }}
-                className="px-5 py-3.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
+                className="px-5 py-3.5 btn-secondary rounded-xl text-xs font-black transition-all flex items-center gap-2 shadow-lg shadow-rose-500/20"
               >
                 <Plus className="w-4 h-4" /> Add Key
               </button>
               <button
                 onClick={handleSaveEngineEnv}
                 disabled={saving}
-                className="px-8 py-3.5 bg-primary hover:bg-primary/90 text-white rounded-xl text-sm font-black transition-all shadow-lg shadow-primary/20 flex items-center gap-2 disabled:opacity-50"
+                className="px-8 py-3.5 btn-accent rounded-xl text-sm font-black transition-all shadow-lg shadow-accent/20 flex items-center gap-2 disabled:opacity-50"
               >
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                <Loader2 className={`w-4 h-4 ${saving ? 'animate-spin' : 'hidden'}`} />
+                <RefreshCw className={`w-4 h-4 ${saving ? 'hidden' : ''}`} />
                 Sync Engine Config
               </button>
             </div>
@@ -185,7 +186,7 @@ export default function EngineManagementPage() {
                   </div>
                   <input
                     type={key.includes("API_KEY") || key.includes("SECRET") ? "password" : "text"}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-mono text-emerald-400 placeholder:text-gray-800 focus:outline-none focus:border-primary/50 transition-all"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-mono text-emerald-600 placeholder:text-gray-600 focus:outline-none focus:border-primary/50 transition-all focus:bg-black/20 focus:text-emerald-500"
                     value={engineEnv?.[key] ?? ""}
                     onChange={e => setEngineEnv(prev => ({ ...(prev ?? {}), [key]: e.target.value }))}
                     placeholder="Empty value"

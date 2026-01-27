@@ -2,6 +2,7 @@ export const themes = [
   { id: "cyber", name: "Cyber Violet", color: "#8b5cf6", desc: "Cool & Pretty", tag: "멋지고 예쁜" },
   { id: "blossom", name: "Cherry Blossom", color: "#ec4899", desc: "Cute & Lovely", tag: "귀엽고 사랑스러운" },
   { id: "polar", name: "Nordic Polar", color: "#06b6d4", desc: "Ethereal & Mystic", tag: "황홀하고 신비로운" },
+  { id: "doraemon", name: "Doraemon Dream", color: "#60a5fa", desc: "Cute & Dreamy", tag: "몽환적이고 귀여운" },
   { id: "minimal", name: "Slate Minimal", color: "#cbd5e1", desc: "Clean & Bright", tag: "화사하고 깔끔한" },
   { id: "nova", name: "Crimson Nova", color: "#f43f5e", desc: "Intense & Powerful", tag: "강렬하고 파워풀한" },
   { id: "matrix", name: "Zion Matrix", color: "#22c55e", desc: "Digital & Hacky", tag: "영화 메트릭스 느낌" },
@@ -21,43 +22,82 @@ export const themeFonts = [
   { id: "roboto", name: "Solid Roboto", font: "var(--font-roboto), sans-serif", desc: "Universal & Neutral" },
 ];
 
-export const terminalThemes = ["bright", "beige", "matrix"];
+export const terminalThemes = ["bright", "beige", "matrix", "doraemon"];
 
-export const themeDetails: Record<string, { primary: string; accent: string; bg: string; card: string }> = {
+export interface ThemeColors {
+  primary: string;
+  accent: string;
+  bg: string;
+  card: string;
+  foreground?: string;
+  primaryForeground?: string;
+  border?: string;
+  cardForeground?: string;
+  mutedForeground?: string;
+  inputBg?: string;
+  cardMuted?: string;
+  navbarBg?: string;
+  navbarForeground?: string;
+  secondary?: string; // Adding red accent for Doraemon's collar
+}
+
+export const themeDetails: Record<string, ThemeColors> = {
   "#8b5cf6": {
     primary: "#a78bfa",
     accent: "#60a5fa",
     bg: "#0c051a",
-    card: "rgba(167, 139, 250, 0.05)"
+    card: "rgba(167, 139, 250, 0.05)",
+    primaryForeground: "#ffffff"
   },
   "#ec4899": {
     primary: "#f472b6",
     accent: "#fb7185",
     bg: "#1a050f",
-    card: "rgba(244, 114, 182, 0.05)"
+    card: "rgba(244, 114, 182, 0.05)",
+    primaryForeground: "#ffffff"
   },
   "#06b6d4": {
     primary: "#22d3ee",
     accent: "#38bdf8",
     bg: "#05131a",
-    card: "rgba(34, 211, 238, 0.05)"
+    card: "rgba(34, 211, 238, 0.05)",
+    primaryForeground: "#083344"
   },
   "#cbd5e1": {
     primary: "#94a3b8",
     accent: "#64748b",
     bg: "#0a0a0c",
-    card: "rgba(148, 163, 184, 0.05)"
+    card: "rgba(148, 163, 184, 0.05)",
+    primaryForeground: "#ffffff"
   },
   "#f43f5e": {
     primary: "#fb7185",
     accent: "#fda4af",
     bg: "#1a0505",
-    card: "rgba(251, 113, 133, 0.05)"
+    card: "rgba(251, 113, 133, 0.05)",
+    primaryForeground: "#ffffff"
   },
   "#22c55e": {
     primary: "#4ade80",
     accent: "#2dd4bf",
     bg: "#051a0a",
-    card: "rgba(74, 222, 128, 0.05)"
+    card: "rgba(74, 222, 128, 0.05)",
+    primaryForeground: "#052e16"
+  },
+  "#60a5fa": {
+    primary: "#60a5fa", // Doraemon Blue
+    accent: "#fbbf24",  // Bell Yellow
+    bg: "#eff6ff",      // Very light blue background
+    card: "rgba(255, 255, 255, 0.6)",
+    foreground: "#1e3a8a", // Deep blue text
+    border: "#bfdbfe",
+    cardForeground: "#1e3a8a",
+    mutedForeground: "#4b5563",
+    inputBg: "#ffffff",
+    cardMuted: "#dbeafe",
+    primaryForeground: "#1e3a8a",
+    navbarBg: "rgba(30, 58, 138, 0.85)",
+    navbarForeground: "#eff6ff",
+    secondary: "#ef4444" // Collar Red
   },
 };

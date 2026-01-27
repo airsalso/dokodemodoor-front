@@ -56,7 +56,7 @@ export default function PermissionManagementPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#05070a] flex flex-col items-center justify-center gap-4">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
         <Shield className="w-12 h-12 text-primary animate-pulse" />
         <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Loading Permission Matrix...</p>
       </div>

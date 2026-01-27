@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAppearance } from "@/context/AppearanceContext";
 import { useAuth } from "@/hooks/useAuth";
-import { themes, fonts, themeFonts } from "@/lib/constants";
+import { themes, fonts, themeFonts, terminalThemes } from "@/lib/constants";
 
 type SettingsTab = "profile" | "scan" | "notifications" | "appearance";
 
@@ -190,7 +190,7 @@ export default function SettingsPage() {
 
   if (loading || isLoadingSettings || isLoadingAppearance || authLoading) {
     return (
-      <div className="min-h-screen bg-[#05070a] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-10 h-10 animate-spin text-primary" />
       </div>
     );
@@ -210,7 +210,7 @@ export default function SettingsPage() {
         {/* Sidebar */}
         <div className="w-full md:w-80 space-y-2">
           <div className="mb-8 px-4">
-            <h1 className="text-3xl font-black mb-2">Settings</h1>
+            <h1 className="text-3xl font-black mb-2 text-foreground">Settings</h1>
             <p className="text-sm text-gray-500">Configure your DokodemoDoor</p>
           </div>
           {tabs.map((tab) => (
@@ -219,8 +219,8 @@ export default function SettingsPage() {
               onClick={() => setActiveTab(tab.id)}
               className={`w-full text-left px-5 py-4 rounded-2xl transition-all flex items-center gap-4 border ${
                 activeTab === tab.id
-                  ? "bg-primary/10 border-primary/30 text-white shadow-[0_0_20px_rgba(139,92,246,0.1)]"
-                  : "bg-transparent border-transparent text-gray-400 hover:bg-white/5 hover:text-white"
+                  ? "bg-primary/10 border-primary/30 text-foreground shadow-[0_0_20px_rgba(139,92,246,0.1)]"
+                  : "bg-transparent border-transparent text-gray-400 hover:bg-white/5 hover:text-foreground"
               }`}
             >
               <tab.icon className={`w-5 h-5 ${activeTab === tab.id ? "text-primary" : ""}`} />
@@ -240,7 +240,7 @@ export default function SettingsPage() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.2 }}
-              className="glass-card p-8 md:p-12 min-h-[600px] border-white/5 bg-white/[0.01]"
+              className="modal-container p-8 md:p-12 min-h-[600px] border-white/5 bg-card-muted"
             >
               {/* Header */}
               <div className="mb-10 flex items-center justify-between">
@@ -279,7 +279,7 @@ export default function SettingsPage() {
                             <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">
                               {user?.role ? t(`role_${user.role.toLowerCase()}`) : t("verified_user")}
                             </p>
-                            <p className="font-bold text-white text-lg">{user?.username}</p>
+                            <p className="font-bold text-foreground text-lg">{user?.username}</p>
                           </div>
                         </div>
 
@@ -323,8 +323,8 @@ export default function SettingsPage() {
                           </div>
                         </div>
                       </div>
-                      <button type="submit" disabled={saving} className="btn-primary flex items-center gap-2">
-                        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                      <button type="submit" disabled={saving} className="btn-accent">
+                        {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                         {t("save_password")}
                       </button>
                     </form>
@@ -336,13 +336,13 @@ export default function SettingsPage() {
                        </h3>
                        <div className="p-8 rounded-3xl bg-rose-500/5 border border-rose-500/10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                          <div className="space-y-1">
-                           <p className="font-bold text-white">Withdraw Account</p>
+                           <p className="font-bold text-foreground">Withdraw Account</p>
                            <p className="text-sm text-gray-500">Permanently mark your account as deleted. This action is irreversible.</p>
                          </div>
                          <button
                             onClick={handleWithdraw}
                             disabled={saving}
-                           className="px-6 py-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 font-bold hover:bg-rose-500 hover:text-white transition-all whitespace-nowrap"
+                            className="px-8 py-4 rounded-2xl btn-secondary font-black transition-all whitespace-nowrap"
                          >
                            Withdraw My Account
                          </button>
@@ -390,8 +390,8 @@ export default function SettingsPage() {
                           </div>
                         </div>
                      </div>
-                     <button onClick={() => handleSaveDbSettings({ exclusions: dbSettings?.exclusions, requestDelay: dbSettings?.requestDelay, timeout: dbSettings?.timeout })} disabled={saving} className="btn-primary flex items-center gap-2">
-                       {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                     <button onClick={() => handleSaveDbSettings({ exclusions: dbSettings?.exclusions, requestDelay: dbSettings?.requestDelay, timeout: dbSettings?.timeout })} disabled={saving} className="btn-accent">
+                       {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                        {t("save_changes")}
                      </button>
                   </div>
@@ -418,7 +418,7 @@ export default function SettingsPage() {
                             <Bell className="w-5 h-5 text-primary" />
                           </div>
                           <div>
-                            <p className="font-bold text-white">{t("email_reports")}</p>
+                            <p className="font-bold text-foreground">{t("email_reports")}</p>
                             <p className="text-xs text-gray-500">{t("email_reports_desc")}</p>
                           </div>
                         </div>
@@ -430,7 +430,8 @@ export default function SettingsPage() {
                         </button>
                       </div>
                     </div>
-                    <button onClick={() => handleSaveDbSettings({ webhookUrl: dbSettings?.webhookUrl })} disabled={saving} className="btn-primary">
+                    <button onClick={() => handleSaveDbSettings({ webhookUrl: dbSettings?.webhookUrl })} disabled={saving} className="btn-accent">
+                       {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                        {t("save_changes")}
                     </button>
                   </div>
@@ -477,7 +478,7 @@ export default function SettingsPage() {
                             <Terminal className="w-4 h-4 text-emerald-400" /> {t("terminal_theme")}
                           </label>
                           <div className="flex flex-wrap gap-2">
-                            {["bright", "beige", "matrix"].map(theme => (
+                            {terminalThemes.map(theme => (
                               <button
                                 key={theme}
                                 onClick={() => {
@@ -609,9 +610,10 @@ export default function SettingsPage() {
                            });
                          }}
                          disabled={saving}
-                         className="btn-primary"
+                         className="btn-accent"
                        >
-                         {saving ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : t("save_changes")}
+                         {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                         {t("save_changes")}
                        </button>
                   </div>
                 )}
@@ -623,13 +625,10 @@ export default function SettingsPage() {
 
       <style jsx global>{`
         .input-base {
-          @apply w-full bg-[#0a0c14] border border-white/10 rounded-xl px-4 py-4 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium placeholder:text-gray-700;
+          @apply w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium placeholder:text-gray-700;
         }
         .btn-primary {
-          @apply bg-primary hover:bg-primary/90 text-white px-8 py-4 rounded-2xl font-black transition-all glow-primary disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-primary/20;
-        }
-        .glass-card {
-          @apply rounded-3xl border border-white/5 backdrop-blur-3xl;
+          @apply bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-4 rounded-2xl font-black transition-all glow-primary disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-primary/20;
         }
       `}</style>
     </>

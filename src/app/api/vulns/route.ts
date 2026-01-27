@@ -36,11 +36,25 @@ export async function GET(req: Request) {
         scan: {
           select: {
             targetUrl: true,
-            startTime: true
+            startTime: true,
+            sourcePath: true
           }
         }
       }
     });
+
+    const projects = await prisma.project.findMany({
+      select: { localPath: true, name: true }
+    });
+    const projectMap = new Map(projects.map(p => [p.localPath, p.name]));
+
+    const vulnsWithProjectName = vulns.map(v => ({
+      ...v,
+      scan: v.scan ? {
+        ...v.scan,
+        projectName: v.scan.sourcePath ? projectMap.get(v.scan.sourcePath) : null
+      } : null
+    }));
 
     // Get summary counts for the current scope (all or specific scan)
     const summaryData = await prisma.vulnerability.groupBy({
@@ -56,7 +70,7 @@ export async function GET(req: Request) {
       return acc;
     }, {} as Record<string, number>);
 
-    return NextResponse.json({ vulns, summary });
+    return NextResponse.json({ vulns: vulnsWithProjectName, summary });
   } catch (error) {
     console.error("Error fetching vulnerabilities:", error);
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

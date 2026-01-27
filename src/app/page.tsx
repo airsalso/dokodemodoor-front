@@ -77,13 +77,13 @@ export default function Home() {
             >
               <Link
                 href="/scans/new"
-                className="px-8 py-4 bg-primary text-white rounded-xl font-bold flex items-center gap-2 glow-primary transition-all hover:scale-105 active:scale-95"
+                className="btn-accent !px-10 !py-4 !rounded-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
               >
-                Launch New Scan <ArrowRight className="w-5 h-5" />
+                Launch New Scan <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
               </Link>
               <Link
                 href="/scans"
-                className="px-8 py-4 bg-white/5 border border-white/10 text-white rounded-xl font-bold transition-all hover:bg-white/10"
+                className="btn-primary !px-10 !py-3 !rounded-2xl hover:scale-105 active:scale-95 transition-all"
               >
                 View History
               </Link>

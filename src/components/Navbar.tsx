@@ -27,18 +27,20 @@ export function Navbar() {
     }
   };
 
-  const navItems = [
-    { name: t("dashboard"), href: "/", icon: LayoutDashboard },
-    { name: t("about"), href: "/about", icon: HelpCircle },
-    { name: t("projects"), href: "/projects", icon: Briefcase },
-    { name: t("scans"), href: "/scans", icon: History },
-    { name: t("logs"), href: "/logs", icon: Terminal },
-    { name: t("reports"), href: "/reports", icon: FileBarChart },
-    { name: t("settings"), href: "/settings", icon: Settings },
+  const allNavItems = [
+    { name: t("dashboard"), href: "/", icon: LayoutDashboard, color: "text-blue-400" },
+    { name: t("about"), href: "/about", icon: HelpCircle, color: "text-purple-400" },
+    { name: t("projects"), href: "/projects", icon: Briefcase, color: "text-amber-400" },
+    { name: t("scans"), href: "/scans", icon: History, color: "text-rose-400" },
+    { name: t("logs"), href: "/logs", icon: Terminal, color: "text-emerald-400" },
+    { name: t("reports"), href: "/reports", icon: FileBarChart, color: "text-indigo-400" },
+    { name: t("settings"), href: "/settings", icon: Settings, color: "text-cyan-400" },
     ...(user?.role && ['ADMIN', 'SECURITY'].includes(user.role)
-      ? [{ name: t("management"), href: "/management/users", icon: Briefcase }]
+      ? [{ name: t("management"), href: "/management/users", icon: Briefcase, color: "text-teal-400" }]
       : [])
   ];
+
+  const navItems = user ? allNavItems : allNavItems.slice(0, 2);
 
   const isManagementActive = pathname.startsWith('/management');
   const isProjectsActive = pathname.startsWith('/projects');
@@ -46,21 +48,30 @@ export function Navbar() {
 
   return (
     <div className="sticky top-0 z-50 w-full flex flex-col">
-      <nav className="w-full backdrop-blur-2xl border-b border-white/5 px-6 py-3 flex items-center justify-between shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
+      <nav className="w-full backdrop-blur-3xl px-8 py-4 flex items-center justify-between relative overflow-hidden"
            style={{
-             background: 'linear-gradient(to bottom, rgba(var(--primary-rgb), 0.12) 0%, rgba(5, 7, 10, 0.8) 50%, rgba(5, 7, 10, 0.4) 100%)',
-             borderBottom: '1px solid rgba(var(--primary-rgb), 0.1)'
+             background: 'linear-gradient(180deg, rgba(30, 58, 138, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
+             color: 'white',
+             borderBottom: '4px solid #ef4444', // Doraemon's red collar
            }}>
-        <div className="flex items-center gap-2">
-          <Link href="/" className="hover:opacity-90 transition-opacity">
-            <Logo className="w-10 h-10" />
+        {/* Subtle glass effect overlay */}
+        <div className="absolute inset-0 bg-white/[0.02] pointer-events-none" />
+
+        <div className="flex items-center gap-4 relative z-10">
+          <Link href="/" className="hover:scale-105 transition-transform duration-300">
+            <Logo className="w-12 h-12 drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]" />
           </Link>
-          <Link href="/" className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
-            DokodemoDoor
+          <Link href="/" className="flex flex-col -space-y-1 group">
+            <span className="text-2xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-200 to-blue-400 group-hover:from-blue-200 group-hover:to-white transition-all duration-500">
+              DokodemoDoor
+            </span>
+            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-400/60 group-hover:text-blue-400 transition-colors">
+              Autonomous Pentesting
+            </span>
           </Link>
         </div>
 
-        <div className="hidden md:flex items-center gap-1">
+        <div className="hidden lg:flex items-center gap-2 relative z-10">
           {navItems.map((item) => {
             const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
             const Icon = item.icon;
@@ -69,18 +80,24 @@ export function Navbar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:text-white ${
-                  isActive ? "text-white" : "text-gray-400"
+                className={`relative px-5 py-2.5 rounded-2xl text-[14px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-3 group ${
+                  isActive
+                    ? "!text-amber-400 bg-white/10 shadow-[inset_0_0_20px_rgba(255,255,255,0.05)]"
+                    : "text-white/60 hover:text-white hover:bg-white/5"
                 }`}
               >
-                <div className="flex items-center gap-2">
-                  <Icon className="w-4 h-4" />
+                <Icon className={`w-5 h-5 transition-all duration-500 group-hover:scale-110 ${
+                  isActive
+                    ? item.color + " drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"
+                    : "text-white/40 group-hover:" + item.color
+                }`} />
+                <span className="relative z-10">
                   {item.name}
-                </div>
+                </span>
                 {isActive && (
                   <motion.div
                     layoutId="navbar-indicator"
-                    className="absolute bottom-[-13px] left-0 right-0 h-[2px] bg-primary"
+                    className="absolute bottom-[-10px] left-6 right-6 h-[3px] bg-amber-400 rounded-full shadow-[0_0_20px_rgba(251,191,36,0.6)]"
                     transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                   />
                 )}
@@ -89,45 +106,52 @@ export function Navbar() {
           })}
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6 relative z-10">
           {user ? (
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-5">
               {user.role !== 'USER' && (
                 <Link
                   href="/scans/new"
-                  className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all glow-primary hover:scale-[1.02] active:scale-[0.98]"
+                  className="btn-accent !rounded-2xl !px-6 !py-3 !text-[13px] hover:scale-[1.05] active:scale-[0.95] transition-all shadow-[0_8px_20px_-5px_rgba(251,191,36,0.4)]"
                 >
-                  <PlayCircle className="w-4 h-4" />
+                  <PlayCircle className="w-5 h-5" />
                   {t("start_pentest")}
                 </Link>
               )}
-              <Link
-                href="/settings"
-                className="flex items-center gap-3 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all group"
-                title="My Account Settings"
-              >
-                <UserIcon className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
-                <div className="flex flex-col items-start -space-y-0.5">
-                  <span className="text-sm font-medium">{user.username}</span>
-                  <span className="text-[9px] font-black text-primary uppercase tracking-widest px-1 bg-primary/10 rounded-sm">
-                    {user.role ? t(`role_${user.role.toLowerCase()}`) : t("role_admin")}
-                  </span>
-                </div>
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="text-gray-400 hover:text-white p-2 transition-colors uppercase text-[10px] font-bold tracking-widest"
-                title={t("logout")}
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
+
+              <div className="h-8 w-px bg-white/10 mx-2" />
+
+              <div className="flex items-center gap-4">
+                <Link
+                  href="/settings"
+                  className="flex items-center gap-4 px-4 py-2 rounded-2xl bg-white/[0.03] border border-white/10 hover:bg-white/[0.08] hover:border-blue-500/30 transition-all group shadow-inner"
+                  title="My Account Settings"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
+                    <UserIcon className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <div className="flex flex-col items-start -space-y-0.5">
+                    <span className="text-sm font-black text-white/90 group-hover:text-white transition-colors">{user.username}</span>
+                    <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest px-2 py-0.5 bg-blue-500/20 rounded-md border border-blue-500/30 shadow-[0_0_10px_rgba(59,130,246,0.2)]">
+                      {user.role ? t(`role_${user.role.toLowerCase()}`) : t("role_admin")}
+                    </span>
+                  </div>
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="group p-3 hover:bg-rose-500/10 rounded-2xl transition-all duration-300 border border-transparent hover:border-rose-500/20"
+                  title={t("logout")}
+                >
+                  <LogOut className="w-5 h-5 text-white/40 group-hover:text-rose-400 transition-colors" />
+                </button>
+              </div>
             </div>
           ) : (
             <Link
               href="/login"
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold border border-white/10 hover:bg-white/5 transition-all"
+              className="btn-accent !rounded-2xl !px-8 !py-3 font-black uppercase tracking-widest text-[13px]"
             >
-              <LogIn className="w-4 h-4 text-primary" />
+              <LogIn className="w-5 h-5" />
               {t("login")}
             </Link>
           )}

@@ -5,6 +5,8 @@ import { promisify } from "util";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 import { processScanFindings } from "@/lib/scan-utils";
+import fs from "fs";
+import path from "path";
 
 const execPromise = promisify(exec);
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "default_secret_key_12345");
@@ -52,12 +54,51 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const scan = await prisma.scan.findUnique({ where: { id } });
     if (!scan) return NextResponse.json({ error: "Scan not found" }, { status: 404 });
 
-    const { sessionId, sourcePath, targetUrl } = scan;
+    let { sessionId } = scan;
+    const { sourcePath, targetUrl } = scan;
+    const STORE_PATH = process.env.STORE_PATH || path.join(ENGINE_DIR, ".dokodemodoor-store.json");
 
-    // Check if sessionId is available
+    // Check if sessionId is available, if not, try fallback to engine store
+    if (!sessionId) {
+      console.log(`[Agent Action] Session ID missing for scan ${id}. Attempting fallback from ${STORE_PATH}...`);
+      try {
+        if (fs.existsSync(STORE_PATH)) {
+          const store = JSON.parse(fs.readFileSync(STORE_PATH, "utf-8"));
+          const sessions = store.sessions || {};
+
+          let matchedSessionId = "";
+          let latestTimestamp = 0;
+          const scanStartTime = scan.startTime.getTime();
+
+          for (const [sid, sessionData] of Object.entries(sessions)) {
+            const session = sessionData as { webUrl?: string; repoPath?: string; createdAt?: string };
+            if (session.webUrl === scan.targetUrl && (session.repoPath === scan.sourcePath || !scan.sourcePath)) {
+              const sessionTime = session.createdAt ? new Date(session.createdAt).getTime() : 0;
+              const timeDiff = Math.abs(sessionTime - scanStartTime);
+              if (!matchedSessionId || timeDiff < Math.abs(latestTimestamp - scanStartTime)) {
+                latestTimestamp = sessionTime;
+                matchedSessionId = sid;
+              }
+            }
+          }
+
+          if (matchedSessionId) {
+            console.log(`[Agent Action] Found matching session for scan ${id}: ${matchedSessionId}`);
+            sessionId = matchedSessionId;
+            await prisma.scan.update({
+              where: { id },
+              data: { sessionId: matchedSessionId }
+            });
+          }
+        }
+      } catch (storeErr) {
+        console.error(`[Agent Action] Fallback recovery failed for scan ${id}:`, storeErr);
+      }
+    }
+
     if (!sessionId) {
       return NextResponse.json({
-        error: "Session ID not found for this scan. The scan may have been created before session tracking was implemented."
+        error: "Session ID not found for this scan and could not be recovered from engine store."
       }, { status: 404 });
     }
 

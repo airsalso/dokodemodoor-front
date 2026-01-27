@@ -216,7 +216,7 @@ export default function AboutPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-[#05070a] text-foreground font-sans overflow-x-hidden" ref={containerRef}>
+      <div className="min-h-screen bg-background text-foreground font-sans overflow-x-hidden" ref={containerRef}>
 
         {/* Animated Background Elements */}
         <div className="fixed inset-0 pointer-events-none z-0">
@@ -246,7 +246,7 @@ export default function AboutPage() {
               transition={{ duration: 0.8, ease: "easeOut" }}
               className="text-7xl md:text-9xl font-black mb-6 tracking-tighter"
             >
-              <span className="bg-clip-text text-transparent bg-gradient-to-b from-white to-white/40">
+              <span className="bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/40">
                 {content.hero.title}
               </span>
             </motion.h1>
@@ -266,10 +266,10 @@ export default function AboutPage() {
               transition={{ delay: 0.4 }}
               className="flex justify-center gap-6"
             >
-              <Link href="/scans" className="px-8 py-4 rounded-xl bg-primary text-white font-bold hover:scale-105 transition-transform flex items-center gap-2 glow-primary">
-                {isKo ? "지금 시작하기" : "Get Started Now"} <ArrowRight className="w-5 h-5" />
+              <Link href="/scans" className="btn-accent group !rounded-2xl !px-10 !py-5">
+                {isKo ? "지금 시작하기" : "Get Started Now"} <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
-              <a href="#philosophy" className="px-8 py-4 rounded-xl bg-white/5 border border-white/10 text-white font-bold hover:bg-white/10 transition-colors">
+              <a href="#philosophy" className="btn-primary !rounded-2xl !px-10 !py-4">
                 {isKo ? "더 알아보기" : "Learn More"}
               </a>
             </motion.div>
@@ -545,7 +545,7 @@ export default function AboutPage() {
           </p>
           <div className="flex flex-col gap-2">
             <p className="text-gray-700 text-xs font-mono">v1.0.0-DOKODEMODOOR STABLE RELEASE</p>
-            <p className="text-gray-800 text-[10px] font-mono uppercase tracking-[0.5em]">2026 KEYGRAPH HQ | DOKODEMODOOR</p>
+            <p className="text-gray-800 text-[10px] font-mono uppercase tracking-[0.5em]">2026 DokodemoDoor HQ | DOKODEMODOOR</p>
           </div>
         </footer>
 
@@ -564,7 +564,7 @@ export default function AboutPage() {
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                className="relative w-full max-w-xl glass-card p-0 overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] border-white/10"
+                className="relative w-full max-w-xl bg-card-muted rounded-[2.5rem] p-0 overflow-hidden shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] border border-white/10"
               >
                 <div className={`p-8 ${selectedAgent.color.replace('text-', 'bg-')}/5 border-b border-white/5 flex items-center justify-between`}>
                   <div className="flex items-center gap-4">
@@ -632,7 +632,7 @@ export default function AboutPage() {
                 <div className="p-6 bg-white/[0.02] border-t border-white/5 flex justify-end">
                    <button
                      onClick={() => setSelectedAgent(null)}
-                     className="px-8 py-3 rounded-xl bg-white text-black font-black hover:scale-105 transition-transform text-sm"
+                     className="px-10 py-4 rounded-2xl bg-primary text-primary-foreground font-black hover:scale-105 transition-transform text-sm shadow-xl shadow-primary/20"
                    >
                      {isKo ? "확인" : "Dismiss"}
                    </button>

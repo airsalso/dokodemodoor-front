@@ -4,15 +4,15 @@ import { useEffect, useMemo, useRef } from "react";
 import { Terminal as XTerm, type ITerminalOptions } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import "@xterm/xterm/css/xterm.css";
-import { useLanguage } from "@/context/LanguageContext";
 import { TERMINAL_THEMES } from "@/constants/terminalThemes";
+import { useAppearance } from "@/context/AppearanceContext";
 
 interface TerminalProps {
   logs: string[];
 }
 
 export function Terminal({ logs }: TerminalProps) {
-  const { terminalTheme, terminalFont } = useLanguage();
+  const { terminalTheme, terminalFont } = useAppearance();
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<XTerm | null>(null);
   const lastLogIndex = useRef(0);

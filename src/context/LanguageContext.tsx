@@ -21,7 +21,7 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>("en");
-  const [terminalTheme, setTerminalThemeState] = useState<string>("monokai");
+  const [terminalTheme, setTerminalThemeState] = useState<string>("doraemon");
   const [terminalFont, setTerminalFontState] = useState<string>("jetbrains");
   const [isLoadingSettings, setIsLoadingSettings] = useState<boolean>(true);
   const { authenticated } = useAuth();

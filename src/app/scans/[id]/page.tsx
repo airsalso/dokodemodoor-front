@@ -10,14 +10,16 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { TERMINAL_THEMES } from "@/constants/terminalThemes";
+import { useAppearance } from "@/context/AppearanceContext";
 
 function ScanDetailContent() {
-  const params = useParams();
-  const id = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : '';
+  const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialView = searchParams.get("view");
-  const { terminalTheme, language, t, formatDuration } = useLanguage();
+
+  const { terminalTheme } = useAppearance();
+  const { language, t, formatDuration } = useLanguage();
   const isKo = language === "ko";
   const [data, setData] = useState<{
     status: string;
@@ -166,26 +168,25 @@ function ScanDetailContent() {
             <span className="flex-1 whitespace-pre">{line}</span>
             {/* Action buttons - hide when active or translating */}
             {!isAgentActive && (canRerun || canRollback) && (
-              <div className="absolute right-2 opacity-0 group-hover:opacity-100 flex items-center gap-3 bg-black/80 px-4 py-1.5 rounded-xl backdrop-blur-xl border border-white/20 shadow-2xl transition-all scale-95 group-hover:scale-100">
+              <div className="absolute right-2 opacity-0 group-hover:opacity-100 flex items-center gap-1 bg-white/5 backdrop-blur-md px-2 py-1.5 rounded-xl border border-white/10 shadow-2xl transition-all scale-95 group-hover:scale-100 z-20">
                 {canRerun && (
                   <button
                     onClick={(e) => { e.stopPropagation(); handleAgentAction(name, 'rerun'); }}
                     disabled={!!actionLoading || translating || data?.status?.toLowerCase() === 'translating' || data?.status?.toLowerCase() === 'running'}
-                    className="text-[9px] font-black hover:text-primary transition-colors uppercase tracking-widest flex items-center gap-1.5 disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-black text-blue-400 hover:text-white hover:bg-blue-500/20 transition-all uppercase tracking-widest disabled:opacity-30 disabled:cursor-not-allowed"
                     title="Rerun this agent"
                   >
-                    <span>🔄</span> RERUN
+                    <RefreshCw className="w-3 h-3" /> RERUN
                   </button>
                 )}
-                {canRerun && canRollback && <div className="w-[1px] h-4 bg-white/20" />}
                 {canRollback && (
                   <button
                     onClick={(e) => { e.stopPropagation(); handleAgentAction(name, 'rollback'); }}
                     disabled={!!actionLoading || translating || data?.status?.toLowerCase() === 'translating' || data?.status?.toLowerCase() === 'running'}
-                    className="text-[9px] font-black hover:text-amber-400 transition-colors uppercase tracking-widest flex items-center gap-1.5 disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-black text-amber-400 hover:text-white hover:bg-amber-500/20 transition-all uppercase tracking-widest disabled:opacity-30 disabled:cursor-not-allowed"
                     title="Rollback to this agent"
                   >
-                    <span>⏪</span> ROLLBACK
+                    <ChevronLeft className="w-3 h-3" /> ROLLBACK
                   </button>
                 )}
               </div>
@@ -203,7 +204,7 @@ function ScanDetailContent() {
   };
 
   const currentTheme = TERMINAL_THEMES[terminalTheme] || TERMINAL_THEMES.bright;
-  const isBright = terminalTheme === "bright" || terminalTheme === "beige";
+  const isBright = ["bright", "beige", "doraemon"].includes(terminalTheme);
 
   const handleRestart = async () => {
     if (!data?.targetUrl || !data?.config) {
@@ -406,63 +407,63 @@ function ScanDetailContent() {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10">
           {/* Left: Branding & Status */}
           <div className="flex flex-col gap-6">
-            <Link
-              href="/scans"
-              className="group inline-flex items-center gap-3 px-4 py-2 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-all active:scale-95 w-fit"
-            >
-              <div className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-primary/10 group-hover:border-primary/30 transition-all">
-                <ChevronLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
-              </div>
-              {t('back to history') || 'Back to History'}
-            </Link>
+            <div className="flex items-start gap-6">
+              <Link
+                href="/scans"
+                className="mt-2 group p-4 bg-rose-500/5 border border-rose-500/20 rounded-2xl text-rose-400 hover:text-white hover:bg-rose-500/20 hover:border-rose-500/40 transition-all active:scale-95 shadow-lg shadow-rose-500/5 hover:shadow-rose-500/10"
+                title={t('back to history') || 'Back to History'}
+              >
+                <ChevronLeft className="w-7 h-7 transition-transform group-hover:-translate-x-1" />
+              </Link>
 
-            <div className="space-y-2">
-              <div className="flex items-center gap-5">
-                <div className={`p-4 rounded-[24px] border shadow-2xl ${
-                  data?.status?.toLowerCase() === 'running' ? 'bg-primary/10 border-primary/20 text-primary' :
-                  data?.status?.toLowerCase() === 'translating' ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400' :
-                  data?.status?.toLowerCase() === 'completed' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
-                  'bg-rose-500/10 border-rose-500/20 text-rose-400'
-                }`}>
-                  {data?.status?.toLowerCase() === 'running' ? <Clock className="w-8 h-8 animate-pulse" /> :
-                   data?.status?.toLowerCase() === 'translating' ? <Languages className="w-8 h-8 animate-pulse" /> :
-                   data?.status?.toLowerCase() === 'completed' ? <CheckCircle2 className="w-8 h-8" /> :
-                   <AlertTriangle className="w-8 h-8" />}
-                </div>
-                <div>
-                  <h1 className="text-5xl font-black tracking-tighter text-white leading-tight mb-1">
-                    {(() => {
-                      if (data?.sourcePath) {
-                        const parts = data.sourcePath.replace(/\\/g, '/').split('/');
-                        const reposIdx = parts.lastIndexOf('repos');
-                        return (reposIdx !== -1 && parts.length > reposIdx + 1)
-                          ? parts[reposIdx + 1]
-                          : parts[parts.length - 1];
-                      }
-                      return id;
-                    })()}
-                  </h1>
-                  <div className="relative flex items-center group/url w-fit">
-                    <button
-                      onClick={handleCopyUrl}
-                      className="text-gray-500 font-mono text-sm tracking-tight hover:text-primary transition-all active:scale-[0.98] text-left cursor-pointer flex items-center gap-2"
-                      title="Click to copy Target URL"
-                    >
-                      <Globe className="w-3.5 h-3.5" />
-                      {data?.target}
-                    </button>
-                    <AnimatePresence>
-                      {copiedUrl && (
-                        <motion.span
-                          initial={{ opacity: 0, scale: 0.8, x: 0 }}
-                          animate={{ opacity: 1, scale: 1, x: 12 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          className="inline-block ml-2 px-2 py-0.5 bg-primary text-white text-[8px] font-black rounded-md shadow-xl shadow-primary/20 whitespace-nowrap"
-                        >
-                          COPIED!
-                        </motion.span>
-                      )}
-                    </AnimatePresence>
+              <div className="space-y-2">
+                <div className="flex items-center gap-5">
+                  <div className={`p-4 rounded-[24px] border shadow-2xl ${
+                    data?.status?.toLowerCase() === 'running' ? 'bg-primary/10 border-primary/20 text-primary' :
+                    data?.status?.toLowerCase() === 'translating' ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400' :
+                    data?.status?.toLowerCase() === 'completed' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
+                    'bg-rose-500/10 border-rose-500/20 text-rose-400'
+                  }`}>
+                    {data?.status?.toLowerCase() === 'running' ? <Clock className="w-8 h-8 animate-pulse" /> :
+                     data?.status?.toLowerCase() === 'translating' ? <Languages className="w-8 h-8 animate-pulse" /> :
+                     data?.status?.toLowerCase() === 'completed' ? <CheckCircle2 className="w-8 h-8" /> :
+                     <AlertTriangle className="w-8 h-8" />}
+                  </div>
+                  <div>
+                    <h1 className="text-5xl font-black tracking-tighter text-foreground leading-tight mb-1">
+                      {(() => {
+                        if (data?.sourcePath) {
+                          const parts = data.sourcePath.replace(/\\/g, '/').split('/');
+                          const reposIdx = parts.lastIndexOf('repos');
+                          return (reposIdx !== -1 && parts.length > reposIdx + 1)
+                            ? parts[reposIdx + 1]
+                            : parts[parts.length - 1];
+                        }
+                        return id;
+                      })()}
+                    </h1>
+                    <div className="relative flex items-center group/url w-fit">
+                      <button
+                        onClick={handleCopyUrl}
+                        className="text-gray-500 font-mono text-sm tracking-tight hover:text-primary transition-all active:scale-[0.98] text-left cursor-pointer flex items-center gap-2"
+                        title="Click to copy Target URL"
+                      >
+                        <Globe className="w-3.5 h-3.5" />
+                        {data?.target}
+                      </button>
+                      <AnimatePresence>
+                        {copiedUrl && (
+                          <motion.span
+                            initial={{ opacity: 0, scale: 0.8, x: 0 }}
+                            animate={{ opacity: 1, scale: 1, x: 12 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            className="inline-block ml-2 px-2 py-0.5 bg-primary text-primary-foreground text-[8px] font-black rounded-md shadow-xl shadow-primary/20 whitespace-nowrap"
+                          >
+                            COPIED!
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -473,11 +474,11 @@ function ScanDetailContent() {
           <div className="flex flex-col items-end gap-6">
             <div className="flex items-center gap-3">
               {data && (
-                <div className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-white/5 border border-white/10 text-xs font-black uppercase tracking-widest text-gray-300 shadow-inner">
-                  <Clock className="w-4 h-4 text-primary" />
+                <div className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-orange-500/5 border border-orange-500/20 text-xs font-black uppercase tracking-widest text-orange-600 shadow-inner">
+                  <Clock className="w-4 h-4 text-orange-500" />
                   <span className="flex items-center gap-2">
                     {t("duration")}:
-                    <span className="text-white font-mono">
+                    <span className="font-mono">
                       {(() => {
                         const isRunning = data.status?.toLowerCase() === 'running' || data.status?.toLowerCase() === 'translating';
                         if (isRunning && data.startTime) {
@@ -499,10 +500,10 @@ function ScanDetailContent() {
 
               <button
                 onClick={handleCopyId}
-                className="group relative px-5 py-3 rounded-2xl bg-white/5 border border-white/10 text-xs font-black font-mono text-gray-400 shadow-inner hover:bg-white/10 hover:text-white transition-all active:scale-95 flex items-center gap-2"
+                className="group relative px-5 py-3 rounded-2xl bg-slate-800/80 border border-slate-700 text-xs font-black font-mono text-slate-300 shadow-inner hover:bg-slate-700 hover:text-white transition-all active:scale-95 flex items-center gap-2"
                 title="Click to copy ID"
               >
-                <Hash className="w-4 h-4 text-primary/50 group-hover:text-primary transition-colors" />
+                <Hash className="w-4 h-4 text-blue-400 group-hover:scale-110 transition-transform" />
                 {id}
                 <AnimatePresence>
                   {copiedId && (
@@ -525,20 +526,20 @@ function ScanDetailContent() {
                   onClick={() => setShowArchive(!showArchive)}
                   className={`px-6 py-4 rounded-2xl border transition-all flex items-center gap-3 font-black text-sm tracking-tight ${
                     showArchive
-                      ? "bg-primary text-white border-primary glow-primary"
-                      : "bg-white/5 border-white/10 text-gray-300 hover:bg-white/10"
+                      ? "bg-violet-500 text-white border-violet-400 shadow-[0_0_20px_rgba(139,92,246,0.4)]"
+                      : "bg-violet-500/5 border-violet-500/10 text-violet-400 hover:bg-violet-500/10 hover:border-violet-500/30"
                   }`}
                 >
-                  <Layout className="w-5 h-5" />
+                  <Layout className={`w-5 h-5 ${showArchive ? 'text-white' : 'text-violet-400'}`} />
                   {showArchive ? (isKo ? "로그 보기" : "VIEW LOGS") : (isKo ? "결과 보관함" : "VIEW ARCHIVE")}
                 </button>
               )}
 
               <button
                 onClick={fetchStatus}
-                className="px-6 py-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all flex items-center gap-3 font-black text-sm tracking-tight text-gray-300"
+                className="px-6 py-4 rounded-2xl bg-sky-500/5 border border-sky-500/10 hover:bg-sky-500/10 hover:border-sky-500/30 transition-all flex items-center gap-3 font-black text-sm tracking-tight text-sky-400"
               >
-                <Activity className="w-5 h-5 text-primary" />
+                <Activity className="w-5 h-5 text-sky-400" />
                 STATUS
               </button>
 
@@ -547,15 +548,15 @@ function ScanDetailContent() {
                 disabled={cleaning || data?.status?.toLowerCase() !== 'failed'}
                 className={`px-6 py-4 rounded-2xl border transition-all flex items-center gap-3 font-black text-sm tracking-tight ${
                   (cleaning || data?.status?.toLowerCase() !== 'failed')
-                    ? "bg-white/5 border-white/10 text-gray-500 opacity-30 cursor-not-allowed"
-                    : "bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:border-amber-500/30"
+                    ? "bg-white/5 border-white/10 text-gray-500 opacity-20 cursor-not-allowed"
+                    : "bg-orange-500/5 border-orange-500/10 text-orange-400 hover:bg-orange-500/10 hover:border-orange-500/30"
                 }`}
                 title={data?.status?.toLowerCase() !== 'failed' ? "Only failed scans can be cleaned up" : "Cleanup session files"}
               >
                 {cleaning ? (
-                  <RefreshCw className="w-5 h-5 animate-spin text-amber-500" />
+                  <RefreshCw className="w-5 h-5 animate-spin text-orange-400" />
                 ) : (
-                  <Eraser className={`w-5 h-5 ${data?.status?.toLowerCase() === 'failed' ? 'text-amber-500' : 'text-gray-500'}`} />
+                  <Eraser className={`w-5 h-5 ${data?.status?.toLowerCase() === 'failed' ? 'text-orange-400' : 'text-gray-500'}`} />
                 )}
                 CLEANUP
               </button>
@@ -594,7 +595,7 @@ function ScanDetailContent() {
 
               <button
                 onClick={handleShare}
-                className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-gray-400 hover:text-white active:scale-95 group relative"
+                className="p-4 rounded-2xl bg-pink-500/5 border border-pink-500/10 hover:bg-pink-500/10 hover:border-pink-500/30 transition-all text-pink-400 hover:text-pink-300 active:scale-95 group relative"
               >
                 <Share2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
                 <AnimatePresence>
@@ -603,7 +604,7 @@ function ScanDetailContent() {
                       initial={{ opacity: 0, y: 10, scale: 0.8 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.8 }}
-                      className="absolute -top-12 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-primary text-white text-[10px] font-bold rounded-lg shadow-2xl"
+                      className="absolute -top-12 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-primary text-primary-foreground text-[10px] font-bold rounded-lg shadow-2xl"
                     >
                       COPIED
                     </motion.span>
@@ -617,7 +618,7 @@ function ScanDetailContent() {
         {/* Terminal Container */}
         <div
           className={`flex-1 flex flex-col rounded-[32px] overflow-hidden shadow-2xl border transition-all duration-500 min-h-0 ${
-            isBright ? 'border-gray-200 bg-white shadow-gray-200/50' : 'border-white/5 bg-[#05070a]'
+            isBright ? 'border-gray-200 bg-white shadow-gray-200/50' : 'border-white/5 bg-background'
           }`}
         >
           {/* Terminal Header Bar */}
@@ -688,74 +689,77 @@ function ScanDetailContent() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-2xl glass-card rounded-3xl border-white/10 overflow-hidden shadow-2xl"
+              className="relative w-full max-w-2xl modal-container bg-card-muted border border-white/10 shadow-[0_32px_80px_-20px_rgba(0,0,0,0.4)] flex flex-col h-full max-h-[85vh] overflow-hidden"
             >
-              <div className="flex items-center justify-between px-8 py-6 border-b border-white/5 bg-white/[0.02]">
-                <div className="flex items-center gap-3">
-                  <Activity className="w-6 h-6 text-primary" />
-                  <h2 className="text-xl font-black tracking-tight underline decoration-primary/30 underline-offset-8">
-                    PENTEST STATUS
-                  </h2>
+              <div className="flex items-center justify-between px-10 py-8 border-b border-white/5 bg-white/[0.02]">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                    <Activity className="w-7 h-7" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-black tracking-tight">{isKo ? "펜테스트 상태 조회" : "PENTEST STATUS"}</h2>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-black">{t("live_engine_trace") || "Live Engine Trace"}</p>
+                  </div>
                 </div>
                 <button
                   onClick={() => setShowStatus(false)}
-                  className="p-2 rounded-xl hover:bg-white/5 transition-colors"
+                  className="p-3 rounded-2xl hover:bg-secondary text-muted-foreground hover:text-white transition-all"
                 >
-                  <X className="w-6 h-6 text-gray-400" />
+                  <X className="w-6 h-6" />
                 </button>
               </div>
 
-              <div className="p-8">
+              <div className="p-10 pt-4 flex-1 overflow-hidden flex flex-col">
                 {statusLoading ? (
                   <div className="py-20 flex flex-col items-center justify-center gap-4">
-                    <Loader2 className="w-10 h-10 animate-spin text-primary" />
-                    <p className="text-sm font-bold text-gray-500 animate-pulse">
-                      FETCHING ENGINE STATUS...
+                    <Loader2 className="w-12 h-12 animate-spin text-primary" />
+                    <p className="text-sm font-black text-gray-500 animate-pulse tracking-widest uppercase">
+                      {t("fetching_engine_status") || "FETCHING ENGINE STATUS..."}
                     </p>
                   </div>
                 ) : (
                   <div
-                    className="font-mono text-sm text-gray-300 bg-black/60 p-6 rounded-2xl border border-white/10 leading-relaxed overflow-x-auto custom-scrollbar max-h-[60vh]"
+                    className="font-mono text-sm text-foreground bg-white/5 border border-white/10 p-8 rounded-[1.5rem] leading-relaxed overflow-x-auto archive-scrollbar max-h-[60vh] shadow-inner"
                   >
                     {renderStatusLines(statusResult || "")}
                   </div>
                 )}
 
-                {statusCommand && !statusLoading && (
-                  <div className="mt-6 space-y-2">
-                    <div className="flex items-center justify-between ml-1">
-                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Executed Command (Debug)</p>
-                      <AnimatePresence>
-                        {copiedCommand && (
-                          <motion.span
-                            initial={{ opacity: 0, x: 10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0 }}
-                            className="text-[10px] font-black text-primary uppercase"
-                          >
-                            Copied to clipboard!
-                          </motion.span>
-                        )}
-                      </AnimatePresence>
+                  {statusCommand && !statusLoading && (
+                    <div className="mt-8 space-y-3">
+                      <div className="flex items-center justify-between ml-1">
+                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">{t("executed_command") || "Executed Command (Debug)"}</p>
+                        <AnimatePresence>
+                          {copiedCommand && (
+                            <motion.span
+                              initial={{ opacity: 0, x: 10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0 }}
+                              className="text-[10px] font-black text-primary uppercase"
+                            >
+                              {isKo ? "클립보드에 복사됨!" : "Copied to clipboard!"}
+                            </motion.span>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                      <button
+                        onClick={handleCopyCommand}
+                        className="w-full text-left bg-white/5 border border-white/10 p-5 rounded-2xl font-mono text-[11px] text-foreground break-all hover:bg-white/10 hover:border-primary/30 transition-all active:scale-[0.99] group relative overflow-hidden"
+                        title="Click to copy command"
+                      >
+                        <div className="relative z-10">{statusCommand}</div>
+                        <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </button>
                     </div>
-                    <button
-                      onClick={handleCopyCommand}
-                      className="w-full text-left bg-black/40 border border-white/5 p-4 rounded-xl font-mono text-[11px] text-primary/70 break-all hover:bg-black/60 hover:border-primary/20 transition-all active:scale-[0.99] group relative overflow-hidden"
-                      title="Click to copy command"
-                    >
-                      <div className="relative z-10">{statusCommand}</div>
-                      <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </button>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
 
-              <div className="px-8 py-6 border-t border-white/5 bg-white/[0.01] flex justify-end">
+              <div className="px-10 py-8 border-t border-white/5 bg-white/[0.01] flex justify-end">
                 <button
                   onClick={() => setShowStatus(false)}
-                  className="px-8 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-sm font-bold transition-all border border-white/10"
+                  className="px-12 py-4 btn-secondary rounded-2xl text-sm font-black transition-all"
                 >
-                  CLOSE
+                  {t("close") || "CLOSE"}
                 </button>
               </div>
             </motion.div>
