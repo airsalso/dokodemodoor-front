@@ -11,6 +11,8 @@ import { useEffect, useState, Suspense } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { TERMINAL_THEMES } from "@/constants/terminalThemes";
 import { useAppearance } from "@/context/AppearanceContext";
+import { useScanDetail, type ScanDetail } from "@/hooks/useScanDetail";
+import { useAuth } from "@/hooks/useAuth";
 
 function ScanDetailContent() {
   const { id } = useParams<{ id: string }>();
@@ -18,29 +20,19 @@ function ScanDetailContent() {
   const searchParams = useSearchParams();
   const initialView = searchParams.get("view");
 
+  const { authenticated, loading: authLoading } = useAuth();
+
   const { terminalTheme } = useAppearance();
   const { language, t, formatDuration } = useLanguage();
   const isKo = language === "ko";
-  const [data, setData] = useState<{
-    status: string;
-    logs: string[];
-    target: string;
-    vulnerabilities: number;
-    targetUrl?: string;
-    sourcePath?: string;
-    config?: string;
-    sessionId?: string;
-    startTime?: number;
-    endTime?: number | null;
-    duration?: string;
-  } | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  const { data: scanData, mutate: refreshDetail } = useScanDetail(id);
   const [copied, setCopied] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
   const [copiedCommand, setCopiedCommand] = useState(false);
   const [restarting, setRestarting] = useState(false);
+  const [stopping, setStopping] = useState(false);
   const [showStatus, setShowStatus] = useState(false);
   const [statusLoading, setStatusLoading] = useState(false);
   const [statusResult, setStatusResult] = useState<string | null>(null);
@@ -48,7 +40,23 @@ function ScanDetailContent() {
   const [cleaning, setCleaning] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [translating, setTranslating] = useState(false);
-  const needsPolling = data?.status === "running" || data?.status === "translating";
+
+  const data = scanData || null;
+  const loading = !scanData;
+
+  useEffect(() => {
+    if (data?.status === "translating") {
+      setTranslating(true);
+    } else {
+      setTranslating(false);
+    }
+  }, [data?.status]);
+
+  useEffect(() => {
+    if (!authLoading && !authenticated) {
+      router.push(`/login?callback=/scans/${id}`);
+    }
+  }, [id, router, authenticated, authLoading]);
 
   const fetchStatus = async () => {
     setShowStatus(true);
@@ -107,10 +115,11 @@ function ScanDetailContent() {
         if (result.isRunning) {
           setShowStatus(false);
           // Update parent state to show it's running
-          if (data) setData({ ...data, status: "running" });
+          refreshDetail();
         } else {
           alert(result.message);
           fetchStatus(); // Refresh status after action
+          refreshDetail();
         }
       } else {
         alert(result.error || "Action failed");
@@ -233,13 +242,9 @@ function ScanDetailContent() {
         setRestarting(false);
       } else {
         // ID is the same, so router.push doesn't trigger a refresh.
-        // Manually update state and clear restarting.
-        setData(prev => prev ? { ...prev, status: "running" } : null);
+        // Manually update state via SWR mutate
+        refreshDetail();
         setRestarting(false);
-
-        // The useEffect will pick up the 'running' status and start polling.
-        // We can also trigger a manual fetch here for immediate UI update.
-        // Actually, setting the status to 'running' is enough to trigger the effector.
       }
     } catch (err) {
       console.error("Restart error:", err);
@@ -248,7 +253,7 @@ function ScanDetailContent() {
     }
   };
 
-  const [stopping, setStopping] = useState(false);
+
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -319,8 +324,8 @@ function ScanDetailContent() {
         alert(data.error || "Failed to stop scan");
         setStopping(false);
       } else {
-        // Optimistic update
-        if (data) setData({ ...data, status: "completed" }); // After translating, it should return to completed or stay failed if it was failed. But stop means we stop the process.
+        // Optimistic update via mutate
+        refreshDetail();
         setTranslating(false);
         setStopping(false);
       }
@@ -331,66 +336,9 @@ function ScanDetailContent() {
     }
   };
 
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval> | null = null;
-
-    const fetchLogs = async () => {
-      try {
-        const res = await fetch(`/api/scan/logs/${id}`);
-        if (res.status === 401) {
-          router.push(`/login?callback=/scans/${id}`);
-          return;
-        }
-        if (!res.ok) return;
-        const json = await res.json();
-        setData(json);
-        setLoading(false);
-
-        if (json.status === "translating") {
-          setTranslating(true);
-        } else if (json.status !== "running") {
-          setTranslating(false);
-        }
-      } catch (err) {
-        console.error("Fetch logs error:", err);
-        console.error("Failed to fetch logs", err);
-      }
-    };
-
-    const init = async () => {
-      try {
-        if (checkingAuth) {
-          const authRes = await fetch("/api/auth/me");
-          const authData = await authRes.json();
-          if (!authData.authenticated) {
-            router.push(`/login?callback=/scans/${id}`);
-            return;
-          }
-          setCheckingAuth(false);
-        }
-
-        await fetchLogs();
-      } catch (err) {
-        console.error("Auth check error:", err);
-        router.push("/login");
-      }
-    };
-
-    init();
-
-    if (needsPolling && !checkingAuth) {
-      const pollInterval = parseInt(process.env.NEXT_PUBLIC_SCAN_LOG_POLL_INTERVAL_MS || "2000");
-      interval = setInterval(fetchLogs, pollInterval);
-    }
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [id, router, checkingAuth, needsPolling]);
-
   const [showArchive, setShowArchive] = useState(initialView === "archive");
 
-  if (checkingAuth || loading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="w-10 h-10 animate-spin text-primary" />

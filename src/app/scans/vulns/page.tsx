@@ -1,83 +1,89 @@
 "use client";
 
 import { Navbar } from "@/components/Navbar";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-    Shield, Search,
-    AlertCircle, AlertTriangle, Info, ShieldAlert,
-    ExternalLink, Calendar, Hash, Loader2, X, Eye,
-    ChevronLeft, ChevronRight, Layers, Globe
-} from "lucide-react";
+import React, { useState, useEffect, useMemo, useDeferredValue } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useState, useEffect, useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import {
+    Search,
+    ShieldAlert,
+    ChevronLeft,
+    ChevronRight,
+    Loader2,
+    Shield,
+    X,
+    Hash,
+    Info,
+    Eye,
+    Globe,
+    Calendar,
+    AlertCircle,
+    AlertTriangle,
+    Layers,
+    ExternalLink
+} from "lucide-react";
 import { format } from "date-fns";
+import { motion, AnimatePresence } from "framer-motion";
+import { useVulns, type Vulnerability } from "@/hooks/useVulns";
+import { useAuth } from "@/hooks/useAuth";
 
-type Vulnerability = {
-    id: string;
-    title: string;
-    type: string;
-    severity: string;
-    description?: string | null;
-    evidence?: string | null;
-    details?: string | null;
-    createdAt: string;
-    scanId: string;
-    scan?: {
-        targetUrl?: string | null;
-        startTime?: string | Date | null;
-        projectName?: string | null;
-    } | null;
+const SEVERITY_RANK: Record<string, number> = {
+    'CRITICAL': 0,
+    'HIGH': 1,
+    'MEDIUM': 2,
+    'LOW': 3,
+    'INFO': 4
 };
 
-export default function VulnerabilitiesPage() {
-    const router = useRouter();
-    const searchParams = useSearchParams();
+const TYPE_RANK: Record<string, number> = {
+    'codei': 0,
+    'sqli': 1,
+    'ssti': 2,
+    'ssrf': 3,
+    'auth': 4,
+    'authz': 5,
+    'pathi': 6,
+    'xss': 7
+};
 
-    const [loading, setLoading] = useState(true);
-    const [vulns, setVulns] = useState<Vulnerability[]>([]);
+
+
+export default function VulnerabilitiesPage() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const { authenticated, loading: authLoading } = useAuth();
+
     const [search, setSearch] = useState("");
     const [selectedVuln, setSelectedVuln] = useState<Vulnerability | null>(null);
-    const [filterSeverity, setFilterSeverity] = useState<string>(searchParams.get("severity") || "ALL");
-    const [severitySummary, setSeveritySummary] = useState<Record<string, number>>({});
     const [currentPage, setCurrentPage] = useState(1);
     const [copiedJson, setCopiedJson] = useState(false);
     const ITEMS_PER_PAGE = 5;
 
-    const scanId = searchParams.get("scanId");
-
-    const fetchVulns = useCallback(async () => {
-        try {
-            setLoading(true);
-            let url = `/api/vulns?limit=500`;
-            if (scanId) url += `&scanId=${scanId}`;
-            if (filterSeverity !== "ALL") url += `&severity=${filterSeverity}`;
-
-            const res = await fetch(url);
-            if (res.status === 401) {
-                router.push("/login?callback=/scans/vulns");
-                return;
-            }
-            const data = await res.json();
-            setVulns(data.vulns || []);
-            if (data.summary) {
-                setSeveritySummary(data.summary);
-            }
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLoading(false);
+    useEffect(() => {
+        if (!authLoading && !authenticated) {
+            router.push(`/login?callback=/scans/vulns`);
         }
-    }, [scanId, filterSeverity, router]);
+    }, [router, authenticated, authLoading]);
 
-    useEffect(() => {
-        fetchVulns();
-    }, [fetchVulns]);
+    const scanId = searchParams.get("scanId");
+    const [filterSeverity, setFilterSeverity] = useState<string>(searchParams.get("severity") || "ALL");
 
-    // Reset to page 1 when search or filter changes
-    useEffect(() => {
+    const { data: vulnData, isLoading: vulnsLoading } = useVulns(scanId, filterSeverity);
+
+    const vulns = useMemo(() => vulnData?.vulnerabilities || [], [vulnData]);
+    const severitySummary = vulnData?.summary || {};
+
+    const deferredSearch = useDeferredValue(search);
+
+    const handleSearchChange = (val: string) => {
+        setSearch(val);
         setCurrentPage(1);
-    }, [search, filterSeverity]);
+    };
+
+    const handleSeverityChange = (sev: string) => {
+        setFilterSeverity(sev);
+        setCurrentPage(1);
+    };
 
     const handleCopyJson = async (data: string) => {
         try {
@@ -89,52 +95,41 @@ export default function VulnerabilitiesPage() {
         }
     };
 
-    const severityRank: Record<string, number> = {
-        'CRITICAL': 0,
-        'HIGH': 1,
-        'MEDIUM': 2,
-        'LOW': 3,
-        'INFO': 4
-    };
 
-    const typeRank: Record<string, number> = {
-        'codei': 0,
-        'sqli': 1,
-        'ssti': 2,
-        'ssrf': 3,
-        'auth': 4,
-        'authz': 5,
-        'pathi': 6,
-        'xss': 7
-    };
 
-    const filteredVulns = vulns
-        .filter(v =>
-            v.title.toLowerCase().includes(search.toLowerCase()) ||
-            v.type.toLowerCase().includes(search.toLowerCase()) ||
-            (v.scan?.targetUrl || "").toLowerCase().includes(search.toLowerCase()) ||
-            v.scanId.toLowerCase().includes(search.toLowerCase())
-        )
-        .sort((a, b) => {
-            // 1. Severity Rank
-            const sevA = severityRank[a.severity.toUpperCase()] ?? 99;
-            const sevB = severityRank[b.severity.toUpperCase()] ?? 99;
-            if (sevA !== sevB) return sevA - sevB;
+    const filteredVulns = useMemo(() => {
+        return vulns
+            .filter(v =>
+                v.title.toLowerCase().includes(deferredSearch.toLowerCase()) ||
+                v.type.toLowerCase().includes(deferredSearch.toLowerCase()) ||
+                (v.scan?.targetUrl || "").toLowerCase().includes(deferredSearch.toLowerCase()) ||
+                v.scanId.toLowerCase().includes(deferredSearch.toLowerCase())
+            )
+            .sort((a, b) => {
+                // 1. Severity Rank
+                const sevA = SEVERITY_RANK[a.severity.toUpperCase()] ?? 99;
+                const sevB = SEVERITY_RANK[b.severity.toUpperCase()] ?? 99;
+                if (sevA !== sevB) return sevA - sevB;
 
-            // 2. Type Rank (8 specific types)
-            const typeA = typeRank[a.type.toLowerCase()] ?? 99;
-            const typeB = typeRank[b.type.toLowerCase()] ?? 99;
-            if (typeA !== typeB) return typeA - typeB;
+                // 2. Type Rank (8 specific types)
+                const typeA = TYPE_RANK[a.type.toLowerCase()] ?? 99;
+                const typeB = TYPE_RANK[b.type.toLowerCase()] ?? 99;
+                if (typeA !== typeB) return typeA - typeB;
 
-            // 3. Title (Alphabetical)
-            return a.title.localeCompare(b.title);
-        });
+                // 3. Title (Alphabetical)
+                return a.title.localeCompare(b.title);
+            });
+    }, [vulns, deferredSearch]);
 
     const totalPages = Math.ceil(filteredVulns.length / ITEMS_PER_PAGE);
-    const paginatedVulns = filteredVulns.slice(
-        (currentPage - 1) * ITEMS_PER_PAGE,
-        currentPage * ITEMS_PER_PAGE
-    );
+    const paginatedVulns = useMemo(() => {
+        return filteredVulns.slice(
+            (currentPage - 1) * ITEMS_PER_PAGE,
+            currentPage * ITEMS_PER_PAGE
+        );
+    }, [filteredVulns, currentPage]);
+
+    const loading = vulnsLoading && !vulnData;
 
     const getSeverityBadge = (severity: string) => {
         const base = "px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 border";
@@ -211,7 +206,7 @@ export default function VulnerabilitiesPage() {
                                 return (
                                     <button
                                         key={s.id}
-                                        onClick={() => setFilterSeverity(s.id)}
+                                        onClick={() => handleSeverityChange(s.id)}
                                         className={`group relative flex items-center gap-2 px-2 py-2 rounded-[2.5rem] border transition-all duration-300 ${colorClasses[s.color]} ${isActive ? 'scale-105 z-10' : 'bg-white/[0.03] opacity-60 hover:opacity-100'} whitespace-nowrap`}
                                     >
                                         <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-inner ${isActive ? 'bg-white/20' : 'bg-white/5'}`}>
@@ -235,7 +230,7 @@ export default function VulnerabilitiesPage() {
                                 placeholder="Search findings..."
                                 className="w-full h-full min-h-[72px] bg-white/5 border border-white/10 rounded-[2.5rem] pl-16 pr-8 text-base transition-all focus:outline-none focus:ring-4 focus:ring-blue-500/20 text-white shadow-inner font-bold placeholder:text-white/20 backdrop-blur-3xl"
                                 value={search}
-                                onChange={(e) => setSearch(e.target.value)}
+                                onChange={(e) => handleSearchChange(e.target.value)}
                             />
                         </div>
                     </div>

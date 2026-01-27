@@ -2,6 +2,19 @@ import { prisma } from "./prisma";
 import fs from "fs";
 import path from "path";
 
+export const SEVERITY_ORDER = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'INFO'];
+
+export const VULN_TYPE_ORDER = [
+  'codei',
+  'sqli',
+  'ssti',
+  'ssrf',
+  'auth',
+  'authz',
+  'pathi',
+  'xss'
+];
+
 export const SEVERITY_MAP: Record<string, string> = {
   'codei': 'CRITICAL',
   'sqli': 'HIGH',

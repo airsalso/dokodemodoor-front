@@ -4,37 +4,20 @@ import { Navbar } from "@/components/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Plus, Filter, CheckCircle2, Clock, XCircle, ChevronLeft, ChevronRight, Loader2, ChevronDown, Trash2, Languages, Activity, RefreshCw, Layout } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useMemo, useDeferredValue } from "react";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
+import { useScans, ScanRecord } from "@/hooks/useScans";
 import React from "react";
 
 type ScanStatus = "all" | "running" | "completed" | "failed" | "translating";
 
-type ScanRecord = {
-  id: string;
-  targetUrl?: string | null;
-  target?: string | null;
-  status: string;
-  startTime: string | number;
-  endTime?: string | null;
-  duration?: string | null;
-  vulnerabilities?: number | null;
-  sourcePath?: string | null;
-  config?: string | null;
-  projectName?: string | null;
-};
 
-type ScanStats = {
-  total: number;
-  running: number;
-  translating?: number;
-  completed: number;
-  failed: number;
-};
+
+
 
 export default function ScansHistory() {
   const router = useRouter();
@@ -42,86 +25,59 @@ export default function ScansHistory() {
   const { user, authenticated, loading: authLoading } = useAuth();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<ScanStatus>("all");
-  const [scans, setScans] = useState<ScanRecord[]>([]);
-  const [activeScan, setActiveScan] = useState<ScanRecord | null>(null);
-  const [loading, setLoading] = useState(true);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCounts, setTotalCounts] = useState<ScanStats>({ total: 0, running: 0, completed: 0, failed: 0 });
   const ITEMS_PER_PAGE = 7;
 
-  const fetchScans = useCallback(async () => {
-    try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: ITEMS_PER_PAGE.toString(),
-        query: search,
-        status: statusFilter
-      });
-      const res = await fetch(`/api/scan/start?${params.toString()}`);
+  const deferredSearch = useDeferredValue(search);
 
-      if (res.status === 401) {
-        router.push("/login?callback=/scans");
-        return;
-      }
+  const { data: scanData, isLoading: scansLoading, mutate: refreshScans } = useScans({
+    page: currentPage,
+    limit: ITEMS_PER_PAGE,
+    query: deferredSearch,
+    status: statusFilter
+  });
 
-      const data = await res.json();
-
-      // Filter out active scan from history to avoid duplication
-      const historyWithoutActive = data.active
-        ? (data.history || []).filter((scan: ScanRecord) => scan.id !== data.active.id)
-        : (data.history || []);
-
-      setScans(historyWithoutActive);
-      setTotalPages(data.pagination?.totalPages || 1);
-      if (data.stats) setTotalCounts(data.stats);
-
-      if (data.active) {
-        const elapsed = Math.round((Date.now() - data.active.startTime) / 1000);
-        setActiveScan({
-          ...data.active,
-          target: data.active.target || data.active.targetUrl || "In progress...",
-          duration: `${elapsed}s`
-        } as ScanRecord);
-      } else {
-        setActiveScan(null);
-      }
-    } catch (err) {
-      console.error("Fetch Error:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, router, search, statusFilter]);
+  const [currentTime, setCurrentTime] = useState(0);
 
   useEffect(() => {
-    if (!authLoading) {
-      if (!authenticated) {
-        router.push("/login?callback=/scans");
-      } else {
-        fetchScans();
-      }
-    }
-  }, [router, authenticated, authLoading, currentPage, statusFilter, fetchScans]);
+    const timer = setInterval(() => setCurrentTime(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
-  // Handle Search Debounce
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (authenticated) fetchScans();
-    }, 100);
-    return () => clearTimeout(timer);
-  }, [search, authenticated, fetchScans]);
+  const processedData = useMemo(() => {
+    if (!scanData) return { history: [], stats: { total: 0, running: 0, completed: 0, failed: 0 }, totalPages: 1 };
 
-  // Polling for active scan updates
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval> | null = null;
-    if (activeScan && authenticated) {
-      interval = setInterval(fetchScans, 5000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
+    const historyWithoutActive = scanData.active
+      ? (scanData.history || []).filter((scan: ScanRecord) => scan.id !== scanData.active?.id)
+      : (scanData.history || []);
+
+    return {
+      history: historyWithoutActive,
+      stats: scanData.stats,
+      totalPages: scanData.pagination?.totalPages || 1
     };
-  }, [activeScan, authenticated, fetchScans]);
+  }, [scanData]);
+
+  const { history: scans, stats: totalCounts, totalPages } = processedData;
+
+  const activeScan = useMemo(() => {
+    if (!scanData?.active || currentTime === 0) return null;
+    const elapsed = Math.round((currentTime - Number(scanData.active.startTime)) / 1000);
+    return {
+      ...scanData.active,
+      target: scanData.active.target || scanData.active.targetUrl || "In progress...",
+      duration: `${elapsed}s`
+    } as ScanRecord;
+  }, [scanData, currentTime]);
+
+  const loading = scansLoading && !scanData;
+
+  useEffect(() => {
+    if (!authLoading && !authenticated) {
+      router.push("/login?callback=/scans");
+    }
+  }, [router, authenticated, authLoading]);
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.preventDefault();
@@ -137,7 +93,7 @@ export default function ScansHistory() {
         alert(data.error || "Failed to delete scan");
       } else {
         // Refresh the list immediately
-        setScans(prev => prev.filter(s => s.id !== id));
+        refreshScans();
       }
     } catch (err) {
       console.error("Delete scan error:", err);
@@ -173,7 +129,7 @@ export default function ScansHistory() {
         alert(data.error || "Failed to restart scan");
       } else {
         // Refresh the list to show "running" status
-        fetchScans();
+        refreshScans();
       }
     } catch (err) {
       console.error("Restart scan error:", err);
@@ -186,7 +142,7 @@ export default function ScansHistory() {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchScans();
+    refreshScans();
   };
 
   const statusOptions: { label: string; value: ScanStatus; color: string }[] = [

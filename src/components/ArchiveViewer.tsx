@@ -298,7 +298,7 @@ export function ArchiveViewer({ scanId, initialLogs }: ArchiveViewerProps) {
                           th: (props) => <th className={`px-6 py-4 text-left text-sm font-black uppercase tracking-wider border-b transition-colors ${isBright ? 'border-gray-200 text-gray-700' : 'border-white/10 text-gray-300'}`} {...props} />,
                           td: (props) => <td className={`px-6 py-4 text-sm border-b transition-colors ${isBright ? 'border-gray-100 text-gray-600' : 'border-white/5 text-gray-400'}`} {...props} />,
                           a: (props) => <a className="text-primary hover:underline font-bold" target="_blank" rel="noopener noreferrer" {...props} />,
-                          code({ inline, className, children, ...props }: MarkdownCodeProps) {
+                          code: React.memo(function MarkdownCode({ inline, className, children, ...props }: MarkdownCodeProps) {
                             const { style: _style, ...rest } = props;
                             void _style;
                             const match = /language-(\w+)/.exec(className || '');
@@ -343,7 +343,7 @@ export function ArchiveViewer({ scanId, initialLogs }: ArchiveViewerProps) {
                                 {children}
                               </code>
                             );
-                          }
+                          })
                         }}
                       >
                         {selectedReport.content}
