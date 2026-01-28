@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { cookies } from "next/headers";
-import { jwtVerify } from "jose";
+import { getAuthSession } from "@/lib/auth-server";
 import type { Prisma } from "@prisma/client";
-
-const SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "default_secret_key_12345");
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -13,12 +10,10 @@ export async function GET(req: Request) {
   const limit = parseInt(searchParams.get("limit") || "100");
 
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("auth_token")?.value;
-    if (!token) {
+    const auth = await getAuthSession();
+    if (!auth) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    await jwtVerify(token, SECRET);
 
     const where: Prisma.VulnerabilityWhereInput = {};
     if (scanId) where.scanId = scanId;
@@ -70,9 +65,13 @@ export async function GET(req: Request) {
       return acc;
     }, {} as Record<string, number>);
 
-    return NextResponse.json({ vulns: vulnsWithProjectName, summary });
+    return NextResponse.json({
+      vulnerabilities: vulnsWithProjectName,
+      vulns: vulnsWithProjectName, // Backward support for older builds/hooks
+      summary
+    });
   } catch (error) {
     console.error("Error fetching vulnerabilities:", error);
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Internal Server Error" }, { status: 500 });
   }
 }

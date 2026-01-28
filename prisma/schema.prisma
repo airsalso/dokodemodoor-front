@@ -17,6 +17,7 @@ model User {
   role      String        @default("USER") // ADMIN, SECURITY, USER
   status    String        @default("ACTIVE") // ACTIVE, INACTIVE, DELETED
   scans     Scan[]
+  sessions  Session[]
   settings  UserSettings?
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
@@ -114,4 +115,18 @@ model RefreshToken {
 
   @@index([userId])
   @@index([token])
+}
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jwt          String   // Encrypted or plain JWT payload for this session
+  userAgent    String?
+  ipAddress    String?
+  expiresAt    DateTime
+  lastActivity DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([id])
 }

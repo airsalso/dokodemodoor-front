@@ -59,12 +59,40 @@ export async function POST(req: Request) {
     const sameSitePolicy = isProduction ? "lax" : "lax";
     const isSecure = isProduction && process.env.COOKIE_SECURE === "true";
 
-    // Set new access token cookie
+    // --- Hybrid Auth: Create Server Session ---
+    const userAgent = req.headers.get("user-agent") || null;
+    const forwarded = req.headers.get("x-forwarded-for");
+    const ipAddress = forwarded ? forwarded.split(',')[0] : "unknown";
+
+    const sessionExpiryHours = 4;
+    const sessionExpiresAt = new Date();
+    sessionExpiresAt.setHours(sessionExpiresAt.getHours() + sessionExpiryHours);
+
+    const session = await prisma.session.create({
+      data: {
+        userId: user.id,
+        jwt: accessToken, // Store the JWT on the server side
+        userAgent,
+        ipAddress,
+        expiresAt: sessionExpiresAt,
+      }
+    });
+
+    // Set Session Cookie (The key to the hybrid architecture)
+    cookieStore.set("auth_session", session.id, {
+      httpOnly: true,
+      secure: isSecure,
+      sameSite: sameSitePolicy,
+      maxAge: 60 * 60 * sessionExpiryHours,
+      path: "/",
+    });
+
+    // Keep auth_token for backward compatibility during transition
     cookieStore.set("auth_token", accessToken, {
       httpOnly: true,
       secure: isSecure,
       sameSite: sameSitePolicy,
-      maxAge: 60 * 60 * 4, // 4 hours
+      maxAge: 60 * 60 * sessionExpiryHours,
       path: "/",
     });
 
