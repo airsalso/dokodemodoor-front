@@ -146,26 +146,29 @@ const LogViewer = ({
 }) => {
   const highlightLogs = (text: string) => {
     if (!text) return "";
-    const largeFileThreshold = parseInt(process.env.NEXT_PUBLIC_LARGE_FILE_THRESHOLD_BYTES || "800000");
-    const isTooLargeThreshold = text.length > largeFileThreshold;
 
+    // First, escape all HTML tags by using React's default behavior or manual escaping
+    // Here we use manual escaping to be compatible with the regex replacement below
     const escaped = text
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
 
-    if (isTooLargeThreshold) return escaped;
+    const largeFileThreshold = parseInt(process.env.NEXT_PUBLIC_LARGE_FILE_THRESHOLD_BYTES || "800000");
+    if (text.length > largeFileThreshold) return escaped;
 
     return escaped
-      .replace(/"type"\s*:\s*"agent_start"/g, '<span class="text-rose-600 font-bold">$&</span>')
-      .replace(/"type"\s*:\s*"agent_end"/g, '<span class="text-rose-600 font-bold">$&</span>')
-      .replace(/"agentName"\s*:\s*"[^"]*"/g, '<span class="text-rose-600 font-bold">$&</span>')
-      .replace(/"type"\s*:\s*"llm_response"/g, '<span class="text-blue-600 font-bold">$&</span>')
-      .replace(/"type"\s*:\s*"tool_start"/g, '<span class="text-purple-600 font-bold">$&</span>')
-      .replace(/"type"\s*:\s*"tool_end"/g, '<span class="text-purple-600 font-bold">$&</span>')
-      .replace(/"toolName"\s*:\s*"[^"]*"/g, '<span class="text-purple-600 font-bold">$&</span>')
-      .replace(/"result"\s*:/g, '<span class="text-purple-600 font-bold">$&</span>')
-      .replace(/"turn"\s*:\s*\d+/g, '<span class="text-rose-600 font-bold">$&</span>');
+      .replace(/&quot;type&quot;\s*:\s*&quot;agent_start&quot;/g, '<span class="text-rose-600 font-bold">$&</span>')
+      .replace(/&quot;type&quot;\s*:\s*&quot;agent_end&quot;/g, '<span class="text-rose-600 font-bold">$&</span>')
+      .replace(/&quot;agentName&quot;\s*:\s*&quot;[^&]*&quot;/g, '<span class="text-rose-600 font-bold">$&</span>')
+      .replace(/&quot;type&quot;\s*:\s*&quot;llm_response&quot;/g, '<span class="text-blue-600 font-bold">$&</span>')
+      .replace(/&quot;type&quot;\s*:\s*&quot;tool_start&quot;/g, '<span class="text-purple-600 font-bold">$&</span>')
+      .replace(/&quot;type&quot;\s*:\s*&quot;tool_end&quot;/g, '<span class="text-purple-600 font-bold">$&</span>')
+      .replace(/&quot;toolName&quot;\s*:\s*&quot;[^&]*&quot;/g, '<span class="text-purple-600 font-bold">$&</span>')
+      .replace(/&quot;result&quot;\s*:/g, '<span class="text-purple-600 font-bold">$&</span>')
+      .replace(/&quot;turn&quot;\s*:\s*\d+/g, '<span class="text-rose-600 font-bold">$&</span>');
   };
 
   const largeFileThreshold = parseInt(process.env.NEXT_PUBLIC_LARGE_FILE_THRESHOLD_BYTES || "800000");

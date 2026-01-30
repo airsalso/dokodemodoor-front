@@ -24,9 +24,7 @@ export function Terminal({ logs }: TerminalProps) {
   );
   const logsRef = useRef<string[]>(logs);
 
-  useEffect(() => {
-    logsRef.current = logs;
-  }, [logs]);
+
 
   useEffect(() => {
     if (!terminalRef.current) return;
@@ -38,15 +36,15 @@ export function Terminal({ logs }: TerminalProps) {
     const termOptions: ITerminalOptions = {
       cursorBlink: true,
       fontSize: 14,
-      fontWeight: "400", // Force normal weight
-      fontWeightBold: "400", // Force bold codes to render as normal to prevent distortion
+      fontWeight: "400",
+      fontWeightBold: "400",
       fontFamily: `${terminalFont ? `${terminalFont}, ` : ""}'JetBrains Mono', 'Fira Code', 'DejaVu Sans Mono', 'Courier New', monospace`,
       theme,
       convertEol: true,
       allowTransparency: false,
       lineHeight: 1.0,
       letterSpacing: 0,
-      allowProposedApi: true, // Enable advanced features like customGlyphs
+      allowProposedApi: true,
       customGlyphs: true,
       scrollback: parseInt(process.env.NEXT_PUBLIC_TERMINAL_SCROLLBACK_LINES || "10000"),
     };
@@ -56,15 +54,11 @@ export function Terminal({ logs }: TerminalProps) {
     term.loadAddon(fitAddon);
     term.open(terminalRef.current);
 
-    // Write all existing logs immediately
-    term.clear();
-    for (const log of logsRef.current) {
-      term.write(log);
-    }
-    lastLogIndex.current = logsRef.current.length;
+    // Store terminal in ref and reset index for the fresh instance
     xtermRef.current = term;
+    lastLogIndex.current = 0;
 
-    // Force fit after a short delay, and another one once fonts are definitely loaded
+    // Force fit after a short delay
     const timeout = setTimeout(() => {
       try {
         fitAddon.fit();
@@ -72,12 +66,6 @@ export function Terminal({ logs }: TerminalProps) {
         console.error("Fit error:", e);
       }
     }, 200);
-
-    const fontTimeout = setTimeout(() => {
-      try {
-        fitAddon.fit();
-      } catch {}
-    }, 1000);
 
     const handleResize = () => {
       try {
@@ -89,27 +77,47 @@ export function Terminal({ logs }: TerminalProps) {
     return () => {
       window.removeEventListener("resize", handleResize);
       clearTimeout(timeout);
-      clearTimeout(fontTimeout);
       term.dispose();
       xtermRef.current = null;
     };
   }, [terminalTheme, terminalFont]); // Remount on theme or font change
 
-  // Stream incoming logs
+  // Unified Log Handler: Handles initial write, appends, and rotations
   useEffect(() => {
-    if (xtermRef.current && logs.length > lastLogIndex.current) {
-      for (let i = lastLogIndex.current; i < logs.length; i++) {
-        xtermRef.current.write(logs[i]);
+    const term = xtermRef.current;
+    if (!term) return;
+
+    const currentLogs = logs;
+    const prevLogs = logsRef.current;
+    const prevLength = lastLogIndex.current;
+    const newLength = currentLogs.length;
+
+    // Trigger full refresh if:
+    // 1. Terminal just opened (prevLength is 0)
+    // 2. Logs were truncated (newLength < prevLength)
+    // 3. Logs were rotated (first entry mismatch)
+    const needsFullRefresh = prevLength === 0 ||
+                             newLength < prevLength ||
+                             (newLength > 0 && prevLogs.length > 0 && currentLogs[0] !== prevLogs[0]);
+
+    if (needsFullRefresh) {
+      term.clear();
+      for (const log of currentLogs) {
+        term.write(log);
       }
-      lastLogIndex.current = logs.length;
+      lastLogIndex.current = newLength;
+      term.scrollToBottom();
     }
-    else if (xtermRef.current && logs.length < lastLogIndex.current) {
-      xtermRef.current.clear();
-      for (const log of logs) {
-        xtermRef.current.write(log);
+    else if (newLength > prevLength) {
+      // Append only
+      for (let i = prevLength; i < newLength; i++) {
+        term.write(currentLogs[i]);
       }
-      lastLogIndex.current = logs.length;
+      lastLogIndex.current = newLength;
+      term.scrollToBottom();
     }
+
+    logsRef.current = logs;
   }, [logs]);
 
   return (

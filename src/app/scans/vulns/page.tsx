@@ -87,7 +87,25 @@ export default function VulnerabilitiesPage() {
 
     const handleCopyJson = async (data: string) => {
         try {
-            await navigator.clipboard.writeText(data);
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(data);
+            } else {
+                // Fallback for non-secure contexts (HTTP)
+                const textArea = document.createElement("textarea");
+                textArea.value = data;
+                textArea.style.position = "fixed";
+                textArea.style.left = "-999999px";
+                textArea.style.top = "-999999px";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                } catch (err) {
+                    console.error('Fallback copy failed', err);
+                }
+                document.body.removeChild(textArea);
+            }
             setCopiedJson(true);
             setTimeout(() => setCopiedJson(false), 2000);
         } catch (err) {

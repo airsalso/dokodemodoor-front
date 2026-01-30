@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
 import { exec } from "child_process";
 import { promisify } from "util";
 import { cookies } from "next/headers";

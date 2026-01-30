@@ -21,9 +21,12 @@ export function useScanDetail(id: string) {
     fetcher,
     {
       refreshInterval: (data) => {
-        return (data?.status === 'running' || data?.status === 'translating') ? 2000 : 0;
+        if (!data) return 2000; // Poll until we get the first data
+        const status = data?.status?.toLowerCase();
+        return (status === 'running' || status === 'translating') ? 2000 : 0;
       },
       revalidateOnFocus: true,
+      revalidateOnReconnect: true,
       keepPreviousData: true,
     }
   );

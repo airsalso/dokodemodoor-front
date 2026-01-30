@@ -122,6 +122,9 @@ export const translations: Record<Language, Record<string, string>> = {
     permission_management: "Permission Management",
     role_permissions: "Role Permissions",
     permission_desc: "Configure access levels and feature availability for system roles.",
+    network_security: "Network Security",
+    ip_access_control: "IP Access Control",
+    ip_desc: "Restrict system access to specific IP addresses. (Nginx-based)"
   },
   ko: {
     // Navbar
@@ -248,5 +251,8 @@ export const translations: Record<Language, Record<string, string>> = {
     role_permissions: "역할별 권한 설정",
     permission_desc: "시스템 역할별 접근 수준 및 기능 가용성을 설정합니다.",
     terminal_font: "터미널 폰트",
+    network_security: "네트워크 보안",
+    ip_access_control: "IP 접근 제어",
+    ip_desc: "시스템 접근이 허용된 IP 주소를 관리합니다. (Nginx 기반)"
   }
 };

@@ -1,6 +1,7 @@
 import { prisma } from "./prisma";
 import fs from "fs";
 import path from "path";
+import { getActiveScan } from "./active-scan";
 
 export const SEVERITY_ORDER = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'INFO'];
 
@@ -122,8 +123,9 @@ export const processScanFindings = async (scanId: string, sourcePath: string | n
 
     // Refresh memory count if this is an active scan
     const currentCount = await prisma.vulnerability.count({ where: { scanId } });
-    if (global.activeScan && global.activeScan.id === scanId) {
-      global.activeScan.vulnerabilities = currentCount;
+    const active = getActiveScan();
+    if (active && active.id === scanId) {
+      active.vulnerabilities = currentCount;
     }
 
     return currentCount;

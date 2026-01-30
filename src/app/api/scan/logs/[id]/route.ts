@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getActiveScan } from "@/lib/active-scan";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(
   req: Request,
@@ -8,19 +11,19 @@ export async function GET(
   const { id } = await params;
 
   // Check memory for active scan
-  if (global.activeScan && global.activeScan.id === id) {
+  const active = getActiveScan();
+  if (active && active.id === id) {
     return NextResponse.json({
-      status: global.activeScan.status,
-      logs: global.activeScan.logs,
-      target: global.activeScan.target,
-      vulnerabilities: global.activeScan.vulnerabilities || 0,
-      startTime: global.activeScan.startTime,
-      duration: global.activeScan.duration, // Might be undefined if still running
-      // Pass through original params if available (added for restart feature)
-      targetUrl: global.activeScan.targetUrl || global.activeScan.target,
-      sourcePath: global.activeScan.sourcePath,
-      config: global.activeScan.config,
-      sessionId: global.activeScan.sessionId,
+      status: active.status,
+      logs: active.logs,
+      target: active.target,
+      vulnerabilities: active.vulnerabilities || 0,
+      startTime: active.startTime,
+      duration: active.duration,
+      targetUrl: active.targetUrl || active.target,
+      sourcePath: active.sourcePath,
+      config: active.config,
+      sessionId: active.sessionId,
     });
   }
 

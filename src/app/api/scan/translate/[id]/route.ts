@@ -1,27 +1,12 @@
 import { NextResponse } from "next/server";
-import { spawn, type ChildProcess } from "child_process";
+import { spawn } from "child_process";
 import { prisma } from "@/lib/prisma";
 import fs from "fs";
 import path from "path";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 
-declare global {
-  var activeScan: {
-    id: string;
-    target: string;
-    status: "running" | "completed" | "failed" | "translating";
-    startTime: number;
-    logs: string[];
-    vulnerabilities?: number;
-    sourcePath?: string;
-    targetUrl?: string;
-    config?: string;
-    sessionId?: string;
-    duration?: string;
-    process?: ChildProcess | null;
-  } | null;
-}
+import { getActiveScan, setActiveScan } from "@/lib/active-scan";
 
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "default_secret_key_12345");
 const STORE_PATH = process.env.STORE_PATH || "/home/ubuntu/dokodemodoor/.dokodemodoor-store.json";
@@ -54,7 +39,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
 
     // Check if any scan is already running in memory
-    if (global.activeScan) {
+    if (getActiveScan()) {
       return NextResponse.json({ error: "Another process (scan or translation) is already running." }, { status: 400 });
     }
 
@@ -101,7 +86,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const existingLogs = scan.logs ? [scan.logs] : [];
 
     // Initialize activeScan in memory for logging and status tracking
-    global.activeScan = {
+    setActiveScan({
       id: id,
       target: targetUrl,
       status: "translating",
@@ -112,7 +97,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         `\n\n${"=".repeat(60)}\n🌐 [TRANSLATE] Starting Korean translation\n📄 Target: ${reportPath}\n${"=".repeat(60)}\n`
       ],
       sourcePath: sourcePath || undefined
-    };
+    });
 
     // Update DB status to reflect translation is happening
     await prisma.scan.update({
@@ -126,13 +111,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       env: { ...process.env, FORCE_COLOR: "3" }
     });
 
-    if (global.activeScan) {
-      global.activeScan.process = proc;
+    const active = getActiveScan();
+    if (active) {
+      active.process = proc;
     }
 
     proc.stdout.on("data", (data) => {
       const lines = data.toString();
-      const active = global.activeScan;
+      const active = getActiveScan();
       if (active && active.id === id) {
         active.logs.push(lines);
         const maxLogs = parseInt(process.env.MAX_LOG_LINES_IN_MEMORY || "5000");
@@ -144,7 +130,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     proc.stderr.on("data", (data) => {
       const lines = data.toString();
-      const active = global.activeScan;
+      const active = getActiveScan();
       if (active && active.id === id) {
         active.logs.push(lines);
       }
@@ -153,7 +139,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     proc.on("close", async (code) => {
       console.log(`[TRANSLATE] Command exited with code ${code}`);
 
-      const active = global.activeScan;
+      const active = getActiveScan();
       const logsToStore = (active && active.id === id) ? active.logs.join("") : "";
 
       await prisma.scan.update({
@@ -164,8 +150,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         }
       });
 
-      if (global.activeScan && global.activeScan.id === id) {
-        global.activeScan = null;
+      if (getActiveScan()?.id === id) {
+        setActiveScan(null);
       }
     });
 

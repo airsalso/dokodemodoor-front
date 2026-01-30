@@ -161,7 +161,7 @@ const TreeItem = React.memo(({
 
       {/* Action Buttons Overlay */}
       <div className="absolute right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-        {node.name.endsWith("_deliverable.md") && !node.name.endsWith("_kr.md") && (
+        {node.name.endsWith(".md") && !node.name.endsWith("_kr.md") && (
             <button
               onClick={(e) => onTranslate?.(e, node.path)}
               disabled={isTranslating || hasTranslation}
@@ -305,7 +305,7 @@ const ReportViewer = ({
       {isTooLarge ? (
         <code className="whitespace-pre-wrap break-all">{content}</code>
       ) : (
-        <code className="whitespace-pre-wrap break-all" dangerouslySetInnerHTML={{ __html: renderedContent }} />
+        <code className="whitespace-pre-wrap break-all">{renderedContent}</code>
       )}
     </pre>
   );

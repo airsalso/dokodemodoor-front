@@ -1,29 +1,12 @@
 import { NextResponse } from "next/server";
-import { spawn, type ChildProcess } from "child_process";
+import { spawn } from "child_process";
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/auth-server";
 import { processScanFindings, captureScanReports } from "@/lib/scan-utils";
 import type { Prisma } from "@prisma/client";
 import fs from "fs";
 
-type ActiveScan = {
-  id: string;
-  target: string;
-  status: "running" | "completed" | "failed" | "translating";
-  startTime: number;
-  logs: string[];
-  vulnerabilities?: number;
-  sourcePath?: string;
-  targetUrl?: string;
-  config?: string;
-  sessionId?: string;
-  duration?: string;
-  process?: ChildProcess | null;
-};
-
-declare global {
-  var activeScan: ActiveScan | null;
-}
+import { getActiveScan, setActiveScan, type ActiveScan } from "@/lib/active-scan";
 
 export async function POST(req: Request) {
   const { targetUrl, sourcePath, config, scanId: existingScanId } = (await req.json()) as {
@@ -38,7 +21,7 @@ export async function POST(req: Request) {
     where: { status: "running" }
   });
 
-  if (global.activeScan || (runningScanInDb && runningScanInDb.id !== existingScanId)) {
+  if (getActiveScan() || (runningScanInDb && runningScanInDb.id !== existingScanId)) {
     return NextResponse.json({ error: "A scan is already in progress. Please wait for it to complete or stop it manually." }, { status: 400 });
   }
 
@@ -85,7 +68,7 @@ export async function POST(req: Request) {
     vulnerabilities: existingVulnCount,
   };
 
-  global.activeScan = scanData;
+  setActiveScan(scanData);
 
   // Persist scan to DB (Upsert logic to avoid duplication on restarts)
   if (existingScanId) {
@@ -143,26 +126,31 @@ export async function POST(req: Request) {
     env: { ...process.env, FORCE_COLOR: "3" }
   });
 
-  if (global.activeScan) {
-    global.activeScan.process = proc;
+  const active = getActiveScan();
+  if (active) {
+    active.process = proc;
   }
 
   proc.stdout.on("data", (data) => {
     const lines = data.toString();
-    global.activeScan?.logs.push(lines);
-    const maxLogs = parseInt(process.env.MAX_LOG_LINES_IN_MEMORY || "5000");
-    if (global.activeScan && global.activeScan.logs.length > maxLogs) {
-      global.activeScan.logs.shift();
+    const active = getActiveScan();
+    if (active) {
+      active.logs.push(lines);
+      const maxLogs = parseInt(process.env.MAX_LOG_LINES_IN_MEMORY || "5000");
+      if (active.logs.length > maxLogs) {
+        active.logs.shift();
+      }
     }
   });
 
   proc.stderr.on("data", (data) => {
-    global.activeScan?.logs.push(data.toString());
+    getActiveScan()?.logs.push(data.toString());
   });
 
   // Track vulnerabilities in real-time
   const findingsInterval = setInterval(() => {
-    if (global.activeScan && global.activeScan.id === scanId) {
+    const active = getActiveScan();
+    if (active && active.id === scanId) {
       processScanFindings(scanId, sourcePath).catch(console.error);
     } else {
       clearInterval(findingsInterval);
@@ -215,8 +203,9 @@ export async function POST(req: Request) {
           data: { sessionId: matchedSessionId }
         });
 
-        if (global.activeScan && global.activeScan.id === scanId) {
-          global.activeScan.sessionId = matchedSessionId;
+        const active = getActiveScan();
+        if (active && active.id === scanId) {
+          active.sessionId = matchedSessionId;
         }
       } else {
         if (retryCount < 10) {
@@ -256,7 +245,7 @@ export async function POST(req: Request) {
       }
     });
 
-    global.activeScan = null;
+    setActiveScan(null);
   });
 
   return NextResponse.json({ scanId });
@@ -333,12 +322,13 @@ export async function GET(req: Request) {
     failed: stats.find(s => s.status === 'failed')?._count.id || 0,
   };
 
+  const active = getActiveScan();
   return NextResponse.json({
-    active: global.activeScan ? {
-      ...global.activeScan,
-      vulnerabilities: global.activeScan.vulnerabilities || 0,
+    active: active ? {
+      ...active,
+      vulnerabilities: active.vulnerabilities || 0,
       logs: undefined,
-      projectName: global.activeScan.sourcePath ? projectMap.get(global.activeScan.sourcePath) : null
+      projectName: active.sourcePath ? projectMap.get(active.sourcePath) : null
     } : null,
     history: historyWithProjectName,
     stats: counts,

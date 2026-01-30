@@ -194,6 +194,15 @@ export function Navbar() {
                 <History className="w-3 h-3" />
                 {t("data_management")}
               </Link>
+              <Link
+                href="/management/security"
+                className={`text-[10px] uppercase font-black tracking-[0.2em] transition-colors flex items-center gap-2 h-full ${
+                  pathname.startsWith('/management/security') ? "text-primary border-b-2 border-primary" : "text-gray-500 hover:text-gray-300"
+                }`}
+              >
+                <Shield className="w-3 h-3 text-rose-500" />
+                {t("network_security")}
+              </Link>
               {user?.role === 'ADMIN' && (
                 <Link
                   href="/management/permissions"

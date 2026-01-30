@@ -278,7 +278,24 @@ function ScanDetailContent() {
 
   const handleCopyId = async () => {
     try {
-      await navigator.clipboard.writeText(id);
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(id);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = id;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        textArea.style.top = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+          document.execCommand('copy');
+        } catch (err) {
+          console.error('Fallback copy failed', err);
+        }
+        document.body.removeChild(textArea);
+      }
       setCopiedId(true);
       setTimeout(() => setCopiedId(false), 2000);
     } catch (err) {
@@ -289,7 +306,24 @@ function ScanDetailContent() {
   const handleCopyUrl = async () => {
     if (!data?.target) return;
     try {
-      await navigator.clipboard.writeText(data.target);
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(data.target);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = data.target;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        textArea.style.top = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+          document.execCommand('copy');
+        } catch (err) {
+          console.error('Fallback copy failed', err);
+        }
+        document.body.removeChild(textArea);
+      }
       setCopiedUrl(true);
       setTimeout(() => setCopiedUrl(false), 2000);
     } catch (err) {
@@ -300,7 +334,24 @@ function ScanDetailContent() {
   const handleCopyCommand = async () => {
     if (!statusCommand) return;
     try {
-      await navigator.clipboard.writeText(statusCommand);
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(statusCommand);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = statusCommand;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        textArea.style.top = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+          document.execCommand('copy');
+        } catch (err) {
+          console.error('Fallback copy failed', err);
+        }
+        document.body.removeChild(textArea);
+      }
       setCopiedCommand(true);
       setTimeout(() => setCopiedCommand(false), 2000);
     } catch (err) {
