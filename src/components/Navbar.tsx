@@ -112,37 +112,61 @@ export function Navbar() {
               {user.role !== 'USER' && (
                 <Link
                   href="/scans/new"
-                  className="btn-accent !rounded-2xl !px-6 !py-3 !text-[13px] hover:scale-[1.05] active:scale-[0.95] transition-all shadow-[0_8px_20px_-5px_rgba(251,191,36,0.4)]"
+                  className="btn-accent !rounded-xl !px-5 !py-2 !text-[16px] !font-black hover:scale-[1.05] active:scale-[0.95] transition-all shadow-[0_8px_20px_-5px_rgba(251,191,36,0.4)] flex items-center gap-2"
                 >
                   <PlayCircle className="w-5 h-5" />
-                  {t("start_pentest")}
+                  Pentest
                 </Link>
               )}
 
               <div className="h-8 w-px bg-white/10 mx-2" />
 
-              <div className="flex items-center gap-4">
-                <Link
-                  href="/settings"
-                  className="flex items-center gap-4 px-4 py-2 rounded-2xl bg-white/[0.03] border border-white/10 hover:bg-white/[0.08] hover:border-blue-500/30 transition-all group shadow-inner"
-                  title="My Account Settings"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
-                    <UserIcon className="w-5 h-5 text-blue-400" />
+              <div className="flex items-center gap-3">
+                {/* Fixed High-Contrast Identity Card */}
+                <div className="flex items-center p-1 rounded-[22px] bg-black/80 border border-white/30 backdrop-blur-xl shadow-2xl">
+                  {/* Profile Avatar */}
+                  <Link
+                    href="/settings"
+                    className="w-10 h-10 rounded-[18px] bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition-all overflow-hidden"
+                  >
+                    <UserIcon className="w-5 h-5 !text-white" />
+                  </Link>
+
+                  {/* Identity Info - Optimized for Long IDs (Emails) */}
+                  <div className="flex flex-col px-4 pr-6 py-1">
+                    {/* First Row: Username only (Expandable) */}
+                    <div className="flex items-center max-w-[200px] sm:max-w-[300px]">
+                      <span className="text-[13px] font-black !text-white tracking-tight leading-tight truncate" title={user.username}>
+                        {user.username}
+                      </span>
+                    </div>
+
+                    {/* Second Row: IP Address & Role Badge together */}
+                    <div className="flex items-center gap-3 mt-1">
+                      {user.ip && (
+                        <div className="flex items-center gap-1.5 opacity-90">
+                          <div className="w-1.5 h-1.5 rounded-full !bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]" />
+                          <span className="text-[10px] font-mono font-bold !text-emerald-400 tracking-tighter flex items-center gap-1">
+                            <Terminal className="w-2.5 h-2.5" />
+                            {user.ip}
+                          </span>
+                        </div>
+                      )}
+
+                      <span className="text-[8px] font-black !text-black uppercase tracking-tighter px-1.5 py-0.5 !bg-amber-400 rounded-sm border border-amber-600/30 leading-none shadow-sm whitespace-nowrap">
+                        {user.role ? t(`role_${user.role.toLowerCase()}`) : t("role_admin")}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex flex-col items-start -space-y-0.5">
-                    <span className="text-sm font-black text-white/90 group-hover:text-white transition-colors">{user.username}</span>
-                    <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest px-2 py-0.5 bg-blue-500/20 rounded-md border border-blue-500/30 shadow-[0_0_10px_rgba(59,130,246,0.2)]">
-                      {user.role ? t(`role_${user.role.toLowerCase()}`) : t("role_admin")}
-                    </span>
-                  </div>
-                </Link>
+                </div>
+
+                {/* Logout Action */}
                 <button
                   onClick={handleLogout}
-                  className="group p-3 hover:bg-rose-500/10 rounded-2xl transition-all duration-300 border border-transparent hover:border-rose-500/20"
+                  className="group w-11 h-11 flex items-center justify-center bg-black/80 hover:bg-rose-600/40 rounded-2xl transition-all border border-white/10 hover:border-rose-500/40"
                   title={t("logout")}
                 >
-                  <LogOut className="w-5 h-5 text-white/40 group-hover:text-rose-400 transition-colors" />
+                  <LogOut className="w-4 h-4 !text-white/70 group-hover:!text-white transition-colors" />
                 </button>
               </div>
             </div>
