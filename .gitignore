@@ -5,5 +5,5 @@ deliverables
 .env.local
 .env.*.local
 .DS_Store
-#*.db
-#*.db-journal
+*.db
+*.db-journal
