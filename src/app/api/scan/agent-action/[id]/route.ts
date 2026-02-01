@@ -8,26 +8,13 @@ import { processScanFindings } from "@/lib/scan-utils";
 import fs from "fs";
 import path from "path";
 
+import { getActiveScan, setActiveScan, removeActiveScan, type ActiveScan } from "@/lib/active-scan";
+
 const execPromise = promisify(exec);
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "default_secret_key_12345");
 const ENGINE_DIR = process.env.ENGINE_DIR || "/home/ubuntu/dokodemodoor";
 
-declare global {
-  var activeScan: {
-    id: string;
-    target: string;
-    status: "running" | "completed" | "failed" | "translating";
-    startTime: number;
-    logs: string[];
-    vulnerabilities?: number;
-    sourcePath?: string;
-    targetUrl?: string;
-    config?: string;
-    sessionId?: string;
-    duration?: string;
-    process?: ChildProcess | null;
-  } | null;
-}
+// Removed outdated declare global for activeScan
 
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -45,9 +32,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     await jwtVerify(token, SECRET);
 
-    // Check for active scan if we are rerunning
-    if (action === 'rerun' && global.activeScan) {
-      return NextResponse.json({ error: "A scan is already in progress." }, { status: 400 });
+    // Check for active scan with THIS ID if we are rerunning
+    if (action === 'rerun' && getActiveScan(id)) {
+      return NextResponse.json({ error: "This scan/rerun is already in progress." }, { status: 400 });
     }
 
     // Get Scan Details
@@ -113,7 +100,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       const command = `./dokodemodoor.mjs`;
       const args = ["--rerun", agentSlug, "--session", sessionId];
 
-      const scanData: NonNullable<typeof global.activeScan> = {
+      const scanData: ActiveScan = {
         id,
         target: targetUrl,
         status: "running" as const,
@@ -122,7 +109,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         logs: [],
         process: null as ChildProcess | null
       };
-      global.activeScan = scanData;
+      setActiveScan(scanData);
 
       await prisma.scan.update({
         where: { id },
@@ -131,20 +118,25 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
       const proc = spawn("npx", ["zx", command, ...args], {
         cwd: ENGINE_DIR,
-        env: { ...process.env, FORCE_COLOR: "3" }
+        env: { ...process.env, FORCE_COLOR: "3" },
+        detached: true
       });
 
-      global.activeScan.process = proc;
+      const active = getActiveScan(id);
+      if (active) active.process = proc;
 
       proc.stdout.on("data", (data) => {
         const text = data.toString();
-        global.activeScan?.logs.push(text);
-        const maxLogs = parseInt(process.env.MAX_LOG_LINES_IN_MEMORY || "5000");
-        if (global.activeScan && global.activeScan.logs.length > maxLogs) global.activeScan.logs.shift();
+        const activeInstance = getActiveScan(id);
+        if (activeInstance) {
+          activeInstance.logs.push(text);
+          const maxLogs = parseInt(process.env.MAX_LOG_LINES_IN_MEMORY || "5000");
+          if (activeInstance.logs.length > maxLogs) activeInstance.logs.shift();
+        }
       });
 
       proc.stderr.on("data", (data) => {
-        global.activeScan?.logs.push(data.toString());
+        getActiveScan(id)?.logs.push(data.toString());
       });
 
       proc.on("close", async (code) => {
@@ -162,7 +154,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             endTime: new Date()
           }
         });
-        global.activeScan = null;
+        removeActiveScan(id);
       });
 
       return NextResponse.json({ message: `Rerun started for ${agentSlug}`, isRunning: true });

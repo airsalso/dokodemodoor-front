@@ -2,15 +2,16 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from "./useAuth";
 
 /**
  * Auto Token Refresh Hook
  *
  * Automatically refreshes the access token using the refresh token
  * when the user is active. Implements:
- * - 25-minute refresh interval (before 30min token expiration)
- * - Activity-based session extension (30min idle timeout)
- * - Automatic logout on refresh failure
+ * - 25-minute refresh interval
+ * - Activity-based session extension (24h idle timeout)
+ * - Graceful handling of refresh failure (don't force logout if session still valid)
  */
 export function useTokenRefresh() {
   const router = useRouter();
@@ -18,6 +19,7 @@ export function useTokenRefresh() {
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const activityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastActivityRef = useRef<number>(0);
+  const { authenticated } = useAuth();
 
   const refreshToken = useCallback(async () => {
     try {
@@ -26,10 +28,10 @@ export function useTokenRefresh() {
       });
 
       if (!res.ok) {
-        // Refresh failed - redirect to login
-        console.log("Token refresh failed, redirecting to login");
-        clearInterval(refreshIntervalRef.current!);
-        router.push("/login");
+        // Refresh failed (e.g. no refresh token or expired)
+        // We don't redirect here because the user might still have a valid session cookie
+        // The natural session expiration will handle logout when it actually happens
+        console.warn("Token refresh skipped or failed (Status: " + res.status + ")");
         return false;
       }
 
@@ -38,11 +40,9 @@ export function useTokenRefresh() {
       return true;
     } catch (error) {
       console.error("Token refresh error:", error);
-      clearInterval(refreshIntervalRef.current!);
-      router.push("/login");
       return false;
     }
-  }, [router]);
+  }, []);
 
   const handleActivity = useCallback(() => {
     lastActivityRef.current = Date.now();
@@ -52,18 +52,22 @@ export function useTokenRefresh() {
       clearTimeout(activityTimeoutRef.current);
     }
 
-    // Set new activity timeout
-    const inactivityHours = parseInt(process.env.NEXT_PUBLIC_SESSION_INACTIVITY_TIMEOUT_HOURS || "4");
+    // Set new activity timeout (Default to 24 hours for internal tool usability)
+    const inactivityHours = parseInt(process.env.NEXT_PUBLIC_SESSION_INACTIVITY_TIMEOUT_HOURS || "24");
     activityTimeoutRef.current = setTimeout(() => {
       console.log("Session expired due to inactivity");
-      clearInterval(refreshIntervalRef.current!);
+      if (refreshIntervalRef.current) clearInterval(refreshIntervalRef.current);
       router.push("/login");
     }, inactivityHours * 60 * 60 * 1000);
   }, [router]);
 
   useEffect(() => {
-    // Skip on login/register pages
-    if (pathname === "/login" || pathname === "/register") {
+    // Skip on login/register pages or if not authenticated
+    if (pathname === "/login" || pathname === "/register" || !authenticated) {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+        refreshIntervalRef.current = null;
+      }
       return;
     }
 

@@ -35,6 +35,7 @@ interface LogNode {
   path: string;
   isRegistered?: boolean;
   scanId?: string;
+  mtime?: number;
   children?: LogNode[];
 }
 
@@ -250,7 +251,26 @@ const ReportViewer = ({
       );
     }
     return (
-      <div className="flex-1 overflow-auto p-8 max-w-full min-w-0 custom-scrollbar bg-[#fdfcf6] text-gray-900 markdown-preview break-words">
+      <div className="flex-1 overflow-auto p-8 max-w-full min-w-0 custom-scrollbar bg-[#fdfcf6] text-gray-900 markdown-preview break-words prose prose-slate max-w-none">
+        <style jsx global>{`
+          .markdown-preview table {
+            display: block;
+            width: 100%;
+            overflow-x: auto;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+          }
+          .markdown-preview pre {
+            max-width: 100% !important;
+            overflow-x: auto !important;
+            white-space: pre-wrap !important;
+            word-break: break-all !important;
+          }
+           .markdown-preview img {
+            max-width: 100%;
+            height: auto;
+          }
+        `}</style>
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
@@ -275,7 +295,8 @@ const ReportViewer = ({
                       borderRadius: '0.75rem',
                       border: '1px solid #e5e7eb',
                       whiteSpace: 'pre-wrap',
-                      wordBreak: 'break-all'
+                      wordBreak: 'break-all',
+                      overflowX: 'hidden'
                     }}
                   >
                     {String(children).replace(/\n$/, '')}
@@ -548,11 +569,8 @@ export default function ReportsPage() {
     const searchLower = deferredSearch.toLowerCase();
 
     const walk = (items: LogNode[], level: number) => {
-      const sorted = [...items].sort((a, b) =>
-        a.type === b.type ? a.name.localeCompare(b.name) : a.type === "directory" ? -1 : 1
-      );
-
-      sorted.forEach(node => {
+      // Respect server-side sorting (mtime descending)
+      items.forEach(node => {
         if (node.type === "file") paths.add(node.path);
 
         const matches = !searchLower || node.name.toLowerCase().includes(searchLower) || (node.children && node.children.some(c => c.name.toLowerCase().includes(searchLower)));
@@ -627,9 +645,9 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        <div className="flex-1 flex gap-6 min-h-0 min-w-0">
+        <div className="flex-1 grid grid-cols-[480px_minmax(0,1fr)] gap-6 min-h-0 min-w-0 overflow-hidden">
           {/* Project Tree Panel */}
-          <div className="w-[480px] flex flex-col glass-card rounded-[2rem] border-white/5 overflow-hidden shadow-2xl relative">
+          <div className="flex flex-col glass-card rounded-[2rem] border-white/5 overflow-hidden shadow-2xl relative min-w-0">
             <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[80px] pointer-events-none" />
 
             <div className="p-6 border-b border-white/5 bg-white/[0.01] backdrop-blur-xl z-20">

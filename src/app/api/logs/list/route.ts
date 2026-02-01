@@ -12,6 +12,7 @@ type FileNode = {
   type: "file" | "directory";
   path: string;
   children?: FileNode[];
+  mtime?: number;
 };
 
 export async function GET() {
@@ -34,24 +35,31 @@ export async function GET() {
 
     const getAllFiles = (dir: string): FileNode[] => {
       const entries = fs.readdirSync(dir, { withFileTypes: true });
-      return entries.map(entry => {
+
+      const nodes = entries.map(entry => {
         const fullPath = path.join(dir, entry.name);
         const relativePath = path.relative(LOG_BASE_DIR, fullPath);
+        const stats = fs.statSync(fullPath);
 
         if (entry.isDirectory()) {
           return {
             name: entry.name,
-            type: "directory",
+            type: "directory" as const,
             path: relativePath,
+            mtime: stats.mtime.getTime(),
             children: getAllFiles(fullPath)
           };
         }
         return {
           name: entry.name,
-          type: "file",
-          path: relativePath
+          type: "file" as const,
+          path: relativePath,
+          mtime: stats.mtime.getTime()
         };
       });
+
+      // Sort by mtime descending (newest first)
+      return nodes.sort((a, b) => (b.mtime || 0) - (a.mtime || 0));
     };
 
     const fileTree = getAllFiles(LOG_BASE_DIR);

@@ -13,6 +13,7 @@ type FileNode = {
   children?: FileNode[];
   isRegistered?: boolean;
   scanId?: string;
+  mtime?: number;
 };
 
 export async function GET() {
@@ -41,24 +42,29 @@ export async function GET() {
     const getFilesRecursively = (dir: string, base: string): FileNode[] => {
       if (!fs.existsSync(dir)) return [];
       const entries = fs.readdirSync(dir, { withFileTypes: true });
-      return entries.map(entry => {
+      const nodes = entries.map(entry => {
         const fullPath = path.join(dir, entry.name);
         const relativePath = path.relative(base, fullPath);
+        const stats = fs.statSync(fullPath);
 
         if (entry.isDirectory()) {
           return {
             name: entry.name,
-            type: "directory",
+            type: "directory" as const,
             path: relativePath,
+            mtime: stats.mtime.getTime(),
             children: getFilesRecursively(fullPath, base)
           };
         }
         return {
           name: entry.name,
-          type: "file",
-          path: relativePath
+          type: "file" as const,
+          path: relativePath,
+          mtime: stats.mtime.getTime()
         };
       });
+
+      return nodes.sort((a, b) => (b.mtime || 0) - (a.mtime || 0));
     };
 
     // We only want projects that have a 'deliverables' folder
@@ -68,22 +74,24 @@ export async function GET() {
     const fileTree = projects.map(project => {
       const projectPath = path.join(REPOS_BASE_DIR, project.name);
       const deliverablesPath = path.join(projectPath, "deliverables");
+      const stats = fs.statSync(projectPath);
 
       // Check if this project is already registered as a scan
-      // We look for a scan whose sourcePath matches or contains this project's name
       const registeredScan = registeredScans.find(s =>
         s.sourcePath && (s.sourcePath === projectPath || s.sourcePath.endsWith(project.name))
       );
 
       return {
         name: project.name,
-        type: "directory",
+        type: "directory" as const,
         path: project.name,
         isRegistered: !!registeredScan,
         scanId: registeredScan?.id,
+        mtime: stats.mtime.getTime(),
         children: getFilesRecursively(deliverablesPath, REPOS_BASE_DIR)
       };
-    }).filter(p => p.children.length > 0);
+    }).filter(p => p.children.length > 0)
+    .sort((a, b) => (b.mtime || 0) - (a.mtime || 0));
 
     return NextResponse.json({ files: fileTree });
   } catch (err) {

@@ -24,9 +24,9 @@ const AppearanceContext = createContext<AppearanceContextType | undefined>(undef
 export function AppearanceProvider({ children }: { children: ReactNode }) {
   const [themeColor, setThemeColorState] = useState<string>("#60a5fa");
   const [accentColor, setAccentColorState] = useState<string>("#3b82f6");
-  const [terminalTheme, setTerminalThemeState] = useState<string>("doraemon");
+  const [terminalTheme, setTerminalThemeState] = useState<string>("bright");
   const [terminalFont, setTerminalFontState] = useState<string>("jetbrains");
-  const [themeFont, setThemeFontState] = useState<string>("outfit");
+  const [themeFont, setThemeFontState] = useState<string>("noto");
   const [isLoadingAppearance, setIsLoadingAppearance] = useState(true);
   const { authenticated } = useAuth();
 
@@ -124,7 +124,7 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
     setTerminalFontState(savedTermFont);
     document.documentElement.setAttribute("data-terminal-font", savedTermFont);
 
-    const savedThemeFont = localStorage.getItem("themeFont") || "outfit";
+    const savedThemeFont = localStorage.getItem("themeFont") || "noto";
     setThemeFontState(savedThemeFont);
     document.documentElement.setAttribute("data-theme-font", savedThemeFont);
 

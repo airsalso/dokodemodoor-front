@@ -30,6 +30,7 @@ interface LogNode {
   name: string;
   type: "directory" | "file";
   path: string;
+  mtime?: number;
   children?: LogNode[];
 }
 
@@ -422,11 +423,8 @@ export default function LogsPage() {
     const searchLower = deferredSearch.toLowerCase();
 
     const walk = (items: LogNode[], level: number) => {
-      const sorted = [...items].sort((a, b) =>
-        a.type === b.type ? a.name.localeCompare(b.name) : a.type === "directory" ? -1 : 1
-      );
-
-      sorted.forEach(node => {
+      // Respect server-side sorting (mtime descending)
+      items.forEach(node => {
         const matches = !searchLower || node.name.toLowerCase().includes(searchLower) || (node.children && node.children.some(c => c.name.toLowerCase().includes(searchLower)));
         if (!matches && node.type === 'file') return;
 

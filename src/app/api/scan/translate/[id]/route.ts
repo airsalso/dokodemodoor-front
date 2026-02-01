@@ -6,7 +6,7 @@ import path from "path";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 
-import { getActiveScan, setActiveScan } from "@/lib/active-scan";
+import { getActiveScan, setActiveScan, removeActiveScan } from "@/lib/active-scan";
 
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "default_secret_key_12345");
 const STORE_PATH = process.env.STORE_PATH || "/home/ubuntu/dokodemodoor/.dokodemodoor-store.json";
@@ -39,8 +39,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
 
     // Check if any scan is already running in memory
-    if (getActiveScan()) {
-      return NextResponse.json({ error: "Another process (scan or translation) is already running." }, { status: 400 });
+    // Check if THIS scan is already running in memory
+    if (getActiveScan(id)) {
+      return NextResponse.json({ error: "This scan/translation is already running." }, { status: 400 });
     }
 
     // Get Scan Details
@@ -111,14 +112,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       env: { ...process.env, FORCE_COLOR: "3" }
     });
 
-    const active = getActiveScan();
+    const active = getActiveScan(id);
     if (active) {
       active.process = proc;
     }
 
     proc.stdout.on("data", (data) => {
       const lines = data.toString();
-      const active = getActiveScan();
+      const active = getActiveScan(id);
       if (active && active.id === id) {
         active.logs.push(lines);
         const maxLogs = parseInt(process.env.MAX_LOG_LINES_IN_MEMORY || "5000");
@@ -130,7 +131,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     proc.stderr.on("data", (data) => {
       const lines = data.toString();
-      const active = getActiveScan();
+      const active = getActiveScan(id);
       if (active && active.id === id) {
         active.logs.push(lines);
       }
@@ -139,7 +140,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     proc.on("close", async (code) => {
       console.log(`[TRANSLATE] Command exited with code ${code}`);
 
-      const active = getActiveScan();
+      const active = getActiveScan(id);
       const logsToStore = (active && active.id === id) ? active.logs.join("") : "";
 
       await prisma.scan.update({
@@ -150,9 +151,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         }
       });
 
-      if (getActiveScan()?.id === id) {
-        setActiveScan(null);
-      }
+      removeActiveScan(id);
     });
 
     return NextResponse.json({ success: true, message: "Translation started" });

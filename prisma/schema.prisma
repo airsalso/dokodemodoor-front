@@ -46,10 +46,10 @@ model UserSettings {
   autoCleanupDays   Int     @default(0) // 0 means disabled
 
   // Appearance
-  terminalTheme     String  @default("monokai")
-  accentColor       String  @default("#8b5cf6")
-  terminalFont      String  @default("var(--font-mono), 'JetBrains Mono', 'Fira Code', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace")
-  themeFont         String  @default("var(--font-outfit), var(--font-inter), sans-serif")
+  terminalTheme     String  @default("bright")
+  accentColor       String  @default("#60a5fa")
+  terminalFont      String  @default("jetbrains")
+  themeFont         String  @default("noto")
   language          String  @default("en")
 }
 

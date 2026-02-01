@@ -11,7 +11,7 @@ export async function GET(
   const { id } = await params;
 
   // Check memory for active scan
-  const active = getActiveScan();
+  const active = getActiveScan(id);
   if (active && active.id === id) {
     return NextResponse.json({
       status: active.status,

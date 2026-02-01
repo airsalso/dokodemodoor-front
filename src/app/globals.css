@@ -7,16 +7,16 @@
   --card-foreground: #f8fafc;
   --popover: #05070a;
   --popover-foreground: #f8fafc;
-  --primary: #8b5cf6;
-  --primary-rgb: 139, 92, 246;
-  --primary-foreground: #ffffff;
-  --secondary: #1e293b;
-  --secondary-foreground: #f8fafc;
-  --muted: #1e293b;
-  --muted-foreground: #94a3b8;
-  --accent: #3b82f6;
-  --accent-rgb: 59, 130, 246;
-  --accent-foreground: #ffffff;
+  --primary: #60a5fa;
+  --primary-rgb: 96, 165, 250;
+  --primary-foreground: #1e3a8a;
+  --secondary: #ef4444;
+  --secondary-foreground: #ffffff;
+  --muted: #dbeafe;
+  --muted-foreground: #4b5563;
+  --accent: #fbbf24;
+  --accent-rgb: 251, 191, 36;
+  --accent-foreground: #1e3a8a;
   --destructive: #ef4444;
   --destructive-foreground: #f8fafc;
   --border: #1e293b;
@@ -26,7 +26,7 @@
   --ring: var(--primary);
   --radius: 0.75rem;
   --user-font-mono: 'JetBrains Mono', monospace;
-  --user-font-sans: 'Outfit', 'Inter', sans-serif;
+  --user-font-sans: var(--font-noto), sans-serif;
 }
 
 /* Dynamic Font Mapping */

@@ -44,7 +44,7 @@ export async function POST(req: Request) {
     }
 
     // Create access token (short-lived)
-    const accessTokenExpiry = process.env.JWT_ACCESS_TOKEN_EXPIRY || "4h";
+    const accessTokenExpiry = process.env.JWT_ACCESS_TOKEN_EXPIRY || "24h";
     const accessToken = await new SignJWT({ id: user.id, username: user.username, role: user.role || "USER" })
       .setProtectedHeader({ alg: "HS256" })
       .setIssuedAt()
@@ -64,7 +64,7 @@ export async function POST(req: Request) {
     const forwarded = req.headers.get("x-forwarded-for");
     const ipAddress = forwarded ? forwarded.split(',')[0] : "unknown";
 
-    const sessionExpiryHours = 4;
+    const sessionExpiryHours = 24;
     const sessionExpiresAt = new Date();
     sessionExpiresAt.setHours(sessionExpiresAt.getHours() + sessionExpiryHours);
 

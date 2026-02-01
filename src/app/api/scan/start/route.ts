@@ -6,7 +6,7 @@ import { processScanFindings, captureScanReports } from "@/lib/scan-utils";
 import type { Prisma } from "@prisma/client";
 import fs from "fs";
 
-import { getActiveScan, setActiveScan, type ActiveScan } from "@/lib/active-scan";
+import { getActiveScan, setActiveScan, removeActiveScan, getAllActiveScans, type ActiveScan } from "@/lib/active-scan";
 
 export async function POST(req: Request) {
   const { targetUrl, sourcePath, config, scanId: existingScanId } = (await req.json()) as {
@@ -16,14 +16,7 @@ export async function POST(req: Request) {
     scanId?: string;
   };
 
-  // Check for already running scan in memory or DB
-  const runningScanInDb = await prisma.scan.findFirst({
-    where: { status: "running" }
-  });
-
-  if (getActiveScan() || (runningScanInDb && runningScanInDb.id !== existingScanId)) {
-    return NextResponse.json({ error: "A scan is already in progress. Please wait for it to complete or stop it manually." }, { status: 400 });
-  }
+  // No longer blocking concurrent scans. Removed previous process check.
 
   // Auth Check
   const { payload, errorResponse } = await withAuth(['ADMIN', 'SECURITY']);
@@ -123,17 +116,18 @@ export async function POST(req: Request) {
     configPath
   ], {
     cwd: engineDir,
-    env: { ...process.env, FORCE_COLOR: "3" }
+    env: { ...process.env, FORCE_COLOR: "3" },
+    detached: true, // Allow killing the entire process group
   });
 
-  const active = getActiveScan();
+  const active = getActiveScan(scanId);
   if (active) {
     active.process = proc;
   }
 
   proc.stdout.on("data", (data) => {
     const lines = data.toString();
-    const active = getActiveScan();
+    const active = getActiveScan(scanId);
     if (active) {
       active.logs.push(lines);
       const maxLogs = parseInt(process.env.MAX_LOG_LINES_IN_MEMORY || "5000");
@@ -144,12 +138,12 @@ export async function POST(req: Request) {
   });
 
   proc.stderr.on("data", (data) => {
-    getActiveScan()?.logs.push(data.toString());
+    getActiveScan(scanId)?.logs.push(data.toString());
   });
 
   // Track vulnerabilities in real-time
   const findingsInterval = setInterval(() => {
-    const active = getActiveScan();
+    const active = getActiveScan(scanId);
     if (active && active.id === scanId) {
       processScanFindings(scanId, sourcePath).catch(console.error);
     } else {
@@ -203,7 +197,7 @@ export async function POST(req: Request) {
           data: { sessionId: matchedSessionId }
         });
 
-        const active = getActiveScan();
+        const active = getActiveScan(scanId);
         if (active && active.id === scanId) {
           active.sessionId = matchedSessionId;
         }
@@ -245,7 +239,7 @@ export async function POST(req: Request) {
       }
     });
 
-    setActiveScan(null);
+    removeActiveScan(scanId);
   });
 
   return NextResponse.json({ scanId });
@@ -322,13 +316,13 @@ export async function GET(req: Request) {
     failed: stats.find(s => s.status === 'failed')?._count.id || 0,
   };
 
-  const active = getActiveScan();
+  const actives = getAllActiveScans();
   return NextResponse.json({
-    active: active ? {
-      ...active,
-      vulnerabilities: active.vulnerabilities || 0,
+    active: actives.length > 0 ? {
+      ...actives[0], // Keep basic compatibility for single active view if needed, or return list
+      vulnerabilities: actives[0].vulnerabilities || 0,
       logs: undefined,
-      projectName: active.sourcePath ? projectMap.get(active.sourcePath) : null
+      projectName: actives[0].sourcePath ? projectMap.get(actives[0].sourcePath) : null
     } : null,
     history: historyWithProjectName,
     stats: counts,

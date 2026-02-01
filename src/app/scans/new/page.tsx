@@ -28,7 +28,7 @@ export default function NewScan() {
   const [configs, setConfigs] = useState<string[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [formData, setFormData] = useState({
-    targetUrl: process.env.NEXT_PUBLIC_DEFAULT_TARGET_URL || "http://localhost:3000",
+    targetUrl: "",
     sourcePath: "",
     config: "",
   });
@@ -383,7 +383,7 @@ rules:
                 required
                 value={formData.targetUrl || ""}
                 onChange={(e) => setFormData({ ...formData, targetUrl: e.target.value })}
-                placeholder="https://dokodemodoor.com"
+                placeholder={process.env.NEXT_PUBLIC_DEFAULT_TARGET_URL || "http://localhost:3000"}
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-mono"
               />
               <p className="text-xs text-gray-500">The live URL of the application to test.</p>

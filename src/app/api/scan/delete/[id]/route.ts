@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getActiveScan } from "@/lib/active-scan";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 
@@ -38,7 +39,7 @@ export async function DELETE(
     }
 
     // 2. Check if it's currently running
-    if (global.activeScan && global.activeScan.id === id) {
+    if (getActiveScan(id)) {
       return NextResponse.json(
         { error: "Cannot delete a scan that is currently in progress. Please stop it first." },
         { status: 400 }

@@ -123,8 +123,8 @@ export const processScanFindings = async (scanId: string, sourcePath: string | n
 
     // Refresh memory count if this is an active scan
     const currentCount = await prisma.vulnerability.count({ where: { scanId } });
-    const active = getActiveScan();
-    if (active && active.id === scanId) {
+    const active = getActiveScan(scanId);
+    if (active) {
       active.vulnerabilities = currentCount;
     }
 

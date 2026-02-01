@@ -15,14 +15,17 @@ export type ActiveScan = {
   process?: ChildProcess | null;
 };
 
-const globalForScan = global as unknown as { activeScan: ActiveScan | null };
+const globalForScan = global as unknown as { activeScans: Map<string, ActiveScan> };
 
-export const getActiveScan = () => globalForScan.activeScan;
-export const setActiveScan = (scan: ActiveScan | null) => {
-  globalForScan.activeScan = scan;
-};
-
-// Ensure it's attached to global in development for HMR
-if (process.env.NODE_ENV !== "production") {
-  globalForScan.activeScan = globalForScan.activeScan || null;
+if (!globalForScan.activeScans) {
+  globalForScan.activeScans = new Map();
 }
+
+export const getActiveScan = (id: string) => globalForScan.activeScans.get(id);
+export const getAllActiveScans = () => Array.from(globalForScan.activeScans.values());
+export const setActiveScan = (scan: ActiveScan) => {
+  globalForScan.activeScans.set(scan.id, scan);
+};
+export const removeActiveScan = (id: string) => {
+  globalForScan.activeScans.delete(id);
+};
