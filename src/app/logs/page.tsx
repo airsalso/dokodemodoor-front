@@ -17,7 +17,11 @@ import {
   Eye,
   Terminal,
   Trash2,
-  Download
+  Download,
+  SortAsc,
+  SortDesc,
+  Clock,
+  ArrowUpDown
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import ReactMarkdown from 'react-markdown';
@@ -32,6 +36,14 @@ interface LogNode {
   path: string;
   mtime?: number;
   children?: LogNode[];
+}
+
+type SortField = 'name' | 'mtime';
+type SortOrder = 'asc' | 'desc';
+
+interface SortConfig {
+  field: SortField;
+  order: SortOrder;
 }
 
 type MarkdownCodeProps = {
@@ -278,6 +290,9 @@ export default function LogsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const deferredSearch = React.useDeferredValue(searchQuery);
 
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ field: 'mtime', order: 'desc' });
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, visible: boolean }>({ x: 0, y: 0, visible: false });
+
   const fetchList = React.useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
@@ -306,6 +321,22 @@ export default function LogsPage() {
 
     return () => clearInterval(interval);
   }, [fetchList]);
+
+  // Handle outside click to close context menu
+  useEffect(() => {
+    const handleClick = () => setContextMenu(prev => ({ ...prev, visible: false }));
+    window.addEventListener('click', handleClick);
+    return () => window.removeEventListener('click', handleClick);
+  }, []);
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      visible: true
+    });
+  };
 
   useEffect(() => {
     if (!selectedPath) {
@@ -437,9 +468,32 @@ export default function LogsPage() {
       });
     };
 
-    walk(nodes, 0);
+    const sortNodes = (items: LogNode[]): LogNode[] => {
+      const sortedItems = [...items].sort((a, b) => {
+        // Directories always come before files
+        if (a.type === "directory" && b.type === "file") return -1;
+        if (a.type === "file" && b.type === "directory") return 1;
+
+        let comparison = 0;
+        if (sortConfig.field === 'name') {
+          comparison = a.name.localeCompare(b.name);
+        } else {
+          comparison = (a.mtime || 0) - (b.mtime || 0);
+        }
+
+        return sortConfig.order === 'asc' ? comparison : -comparison;
+      });
+
+      return sortedItems.map(item => ({
+        ...item,
+        children: item.children ? sortNodes(item.children) : undefined
+      }));
+    };
+
+    const sortedNodes = sortNodes(nodes);
+    walk(sortedNodes, 0);
     return result;
-  }, [nodes, expandedFolders, deferredSearch]);
+  }, [nodes, expandedFolders, deferredSearch, sortConfig]);
 
   return (
     <div className="h-screen w-full flex flex-col bg-background overflow-hidden relative">
@@ -513,7 +567,7 @@ export default function LogsPage() {
                 />
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar z-10">
+            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar z-10" onContextMenu={handleContextMenu}>
               {loading && nodes.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full gap-3 text-gray-500">
                   <Loader2 className="w-6 h-6 animate-spin" />
@@ -584,6 +638,70 @@ export default function LogsPage() {
           </div>
         </div>
       </main>
+
+      {/* Sort Context Menu */}
+      {contextMenu.visible && (
+        <div
+          className="fixed z-[100] w-64 bg-white/80 dark:bg-[#1a1c1e]/90 border border-blue-500/20 dark:border-white/10 rounded-[2rem] shadow-[0_20px_50px_rgba(59,130,246,0.15)] overflow-hidden backdrop-blur-2xl animate-in fade-in zoom-in duration-200"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="p-4 border-b border-blue-500/10 bg-blue-500/5">
+            <span className="text-[10px] font-black text-blue-600/60 dark:text-gray-500 uppercase tracking-widest px-2">Sort Logs By</span>
+          </div>
+          <div className="p-2">
+            <button
+              onClick={() => {
+                setSortConfig({ field: 'name', order: 'asc' });
+                setContextMenu(prev => ({ ...prev, visible: false }));
+              }}
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm transition-all ${sortConfig.field === 'name' && sortConfig.order === 'asc' ? 'bg-blue-500 text-white font-bold shadow-lg shadow-blue-500/30' : 'text-slate-600 dark:text-gray-300 hover:bg-blue-500/5 hover:text-blue-600'}`}
+            >
+              <div className="flex items-center gap-3">
+                <SortAsc className="w-4 h-4" />
+                Name (A-Z)
+              </div>
+            </button>
+            <button
+              onClick={() => {
+                setSortConfig({ field: 'name', order: 'desc' });
+                setContextMenu(prev => ({ ...prev, visible: false }));
+              }}
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm transition-all ${sortConfig.field === 'name' && sortConfig.order === 'desc' ? 'bg-blue-500 text-white font-bold shadow-lg shadow-blue-500/30' : 'text-slate-600 dark:text-gray-300 hover:bg-blue-500/5 hover:text-blue-600'}`}
+            >
+              <div className="flex items-center gap-3">
+                <SortDesc className="w-4 h-4" />
+                Name (Z-A)
+              </div>
+            </button>
+            <div className="my-1.5 border-t border-blue-500/5" />
+            <button
+              onClick={() => {
+                setSortConfig({ field: 'mtime', order: 'asc' });
+                setContextMenu(prev => ({ ...prev, visible: false }));
+              }}
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm transition-all ${sortConfig.field === 'mtime' && sortConfig.order === 'asc' ? 'bg-blue-500 text-white font-bold shadow-lg shadow-blue-500/30' : 'text-slate-600 dark:text-gray-300 hover:bg-blue-500/5 hover:text-blue-600'}`}
+            >
+              <div className="flex items-center gap-3">
+                <Clock className="w-4 h-4" />
+                Oldest First
+              </div>
+            </button>
+            <button
+              onClick={() => {
+                setSortConfig({ field: 'mtime', order: 'desc' });
+                setContextMenu(prev => ({ ...prev, visible: false }));
+              }}
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm transition-all ${sortConfig.field === 'mtime' && sortConfig.order === 'desc' ? 'bg-blue-500 text-white font-bold shadow-lg shadow-blue-500/30' : 'text-slate-600 dark:text-gray-300 hover:bg-blue-500/5 hover:text-blue-600'}`}
+            >
+              <div className="flex items-center gap-3">
+                <ArrowUpDown className="w-4 h-4" />
+                Newest First
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

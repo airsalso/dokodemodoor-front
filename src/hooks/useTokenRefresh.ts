@@ -98,5 +98,5 @@ export function useTokenRefresh() {
         window.removeEventListener(event, handleActivity);
       });
     };
-  }, [pathname, handleActivity, refreshToken]);
+  }, [pathname, handleActivity, refreshToken, authenticated]);
 }
