@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 
-// Force reload after schema change: 2026-01-29 00:07
+// Force reload after schema change: 2026-02-03 23:12
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
 export const prisma =

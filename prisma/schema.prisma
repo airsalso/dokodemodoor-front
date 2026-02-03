@@ -16,9 +16,11 @@ model User {
   password  String
   role      String        @default("USER") // ADMIN, SECURITY, USER
   status    String        @default("ACTIVE") // ACTIVE, INACTIVE, DELETED
-  scans     Scan[]
-  sessions  Session[]
-  settings  UserSettings?
+  scans         Scan[]
+  sessions      Session[]
+  settings      UserSettings?
+  refreshTokens       RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
 }
@@ -26,7 +28,7 @@ model User {
 model UserSettings {
   id                String  @id @default(cuid())
   userId            String  @unique
-  user              User    @relation(fields: [userId], references: [id])
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Scan Configs
   exclusions        String  @default("admin,logout,login")
@@ -68,7 +70,7 @@ model Scan {
   duration        String?
   logs            String?  // Full terminal logs stored permanently
   userId          String?
-  user            User?    @relation(fields: [userId], references: [id])
+  user            User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ScanReport {
@@ -108,6 +110,7 @@ model Project {
 model RefreshToken {
   id           String   @id @default(cuid())
   userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   token        String   @unique
   expiresAt    DateTime
   lastActivity DateTime @default(now())
@@ -129,4 +132,16 @@ model Session {
 
   @@index([userId])
   @@index([id])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
 }

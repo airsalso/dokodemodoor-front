@@ -353,6 +353,16 @@
     background-color: rgba(var(--primary-rgb), 0.05) !important;
     border-color: rgba(var(--primary-rgb), 0.1) !important;
   }
+
+  /* Specific Checkbox Contrast for Doraemon Theme */
+  :root[data-theme="doraemon"] input[type="checkbox"] + div {
+    border-color: var(--primary) !important;
+    background-color: white !important;
+  }
+
+  :root[data-theme="doraemon"] input[type="checkbox"]:checked + div {
+    background-color: var(--primary) !important;
+  }
 }
 
 /* Custom terminal styling for xterm */

@@ -290,7 +290,7 @@ export default function LogsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const deferredSearch = React.useDeferredValue(searchQuery);
 
-  const [sortConfig, setSortConfig] = useState<SortConfig>({ field: 'mtime', order: 'desc' });
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ field: 'name', order: 'asc' });
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, visible: boolean }>({ x: 0, y: 0, visible: false });
 
   const fetchList = React.useCallback(async (silent = false) => {

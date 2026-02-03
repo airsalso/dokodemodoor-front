@@ -192,8 +192,35 @@ export async function DELETE(req: Request) {
        return NextResponse.json({ error: "Cannot delete yourself" }, { status: 400 });
     }
 
-    await prisma.user.delete({
-      where: { id: userId }
+    // Delete related records first to avoid foreign key constraint violations
+    await prisma.$transaction(async (tx) => {
+      // 1. Delete user settings
+      await tx.userSettings.deleteMany({ where: { userId } });
+
+      // 2. Delete sessions
+      await tx.session.deleteMany({ where: { userId } });
+
+      // 3. Delete refresh tokens
+      await tx.refreshToken.deleteMany({ where: { userId } });
+
+      // 4. Delete scans and their related data
+      const userScans = await tx.scan.findMany({
+        where: { userId },
+        select: { id: true }
+      });
+      const scanIds = userScans.map(s => s.id);
+
+      if (scanIds.length > 0) {
+        // Manually delete findings and reports to be safe (fallback for DB cascade)
+        await tx.vulnerability.deleteMany({ where: { scanId: { in: scanIds } } });
+        await tx.scanReport.deleteMany({ where: { scanId: { in: scanIds } } });
+        await tx.scan.deleteMany({ where: { id: { in: scanIds } } });
+      }
+
+      // 5. Finally delete the user
+      await tx.user.delete({
+        where: { id: userId }
+      });
     });
 
     return NextResponse.json({ success: true });

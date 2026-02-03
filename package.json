@@ -21,6 +21,7 @@
     "jose": "^6.1.3",
     "lucide-react": "^0.562.0",
     "next": "16.1.2",
+    "nodemailer": "^7.0.13",
     "prisma": "^6.2.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -36,6 +37,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/nodemailer": "^7.0.9",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

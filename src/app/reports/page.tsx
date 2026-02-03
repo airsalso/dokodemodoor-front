@@ -363,7 +363,7 @@ export default function ReportsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const deferredSearch = useDeferredValue(searchQuery);
 
-  const [sortConfig, setSortConfig] = useState<SortConfig>({ field: 'mtime', order: 'desc' });
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ field: 'name', order: 'asc' });
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, visible: boolean }>({ x: 0, y: 0, visible: false });
 
   const fetchList = useCallback(async (silent = false) => {
