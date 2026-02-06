@@ -2,7 +2,8 @@
 
 import { Navbar } from "@/components/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Plus, Filter, CheckCircle2, Clock, XCircle, ChevronLeft, ChevronRight, Loader2, ChevronDown, Trash2, Languages, Activity, RefreshCw, Layout } from "lucide-react";
+import { Search, Plus, Filter, CheckCircle2, Clock, XCircle, ChevronLeft, ChevronRight, Loader2, ChevronDown, Trash2, Languages, Activity, RefreshCw, Layout, FileText } from "lucide-react";
+import { DocumentationModal } from "@/components/DocumentationModal";
 import Link from "next/link";
 import { useState, useEffect, useMemo, useDeferredValue } from "react";
 import { useRouter } from "next/navigation";
@@ -28,6 +29,11 @@ export default function ScansHistory() {
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 7;
+
+  // Documentation State
+  const [showDocsModal, setShowDocsModal] = useState(false);
+  const [docContent, setDocContent] = useState("");
+  const [docsLoading, setDocsLoading] = useState(false);
 
   const deferredSearch = useDeferredValue(search);
 
@@ -79,6 +85,30 @@ export default function ScansHistory() {
       router.push("/login?callback=/sca-scans");
     }
   }, [router, authenticated, authLoading]);
+
+  const fetchDocs = async () => {
+    if (docContent) {
+      setShowDocsModal(true);
+      return;
+    }
+    setDocsLoading(true);
+    setShowDocsModal(true);
+    try {
+      // Placeholder for now, user will provide path later
+      const res = await fetch("/api/docs/sca-guide");
+      const data = await res.json();
+      if (data.content) {
+        setDocContent(data.content);
+      } else {
+        setDocContent("Failed to load documentation.");
+      }
+    } catch (err) {
+      console.error("Failed to fetch docs:", err);
+      setDocContent("Error loading documentation.");
+    } finally {
+      setDocsLoading(false);
+    }
+  };
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.preventDefault();
@@ -178,15 +208,24 @@ export default function ScansHistory() {
               {language === "ko" ? "모든 자동화된 보안 평가 기록을 관리합니다." : "Manage all automated security assessment records."}
             </p>
           </div>
-          {user?.role !== 'USER' && (
-            <Link
-              href="/sca-scans/new"
-              className="w-full md:w-auto px-10 py-4 btn-accent rounded-2xl font-black flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all whitespace-nowrap"
+          <div className="flex flex-wrap gap-4 items-center">
+            <button
+              onClick={fetchDocs}
+              className="p-4 bg-white/5 border border-white/10 rounded-2xl text-gray-400 hover:text-primary transition-all shadow-lg active:scale-95"
+              title="Documentation"
             >
-              <Plus className="w-5 h-5" />
-              {t("start New scan") || "Start New Scan"}
-            </Link>
-          )}
+              <FileText className="w-6 h-6" />
+            </button>
+            {user?.role !== 'USER' && (
+              <Link
+                href="/sca-scans/new"
+                className="w-full md:w-auto px-10 py-4 btn-accent rounded-2xl font-black flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all whitespace-nowrap"
+              >
+                <Plus className="w-5 h-5" />
+                {t("start New scan") || "Start New Scan"}
+              </Link>
+            )}
+          </div>
         </header>
 
         {/* Filters & Statistics Row */}
@@ -433,6 +472,14 @@ export default function ScansHistory() {
           </div>
         )}
       </div>
+
+      <DocumentationModal
+        isOpen={showDocsModal}
+        onClose={() => setShowDocsModal(false)}
+        title="SCA Analysis"
+        content={docContent}
+        isLoading={docsLoading}
+      />
     </>
   );
 }

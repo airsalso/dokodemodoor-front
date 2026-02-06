@@ -251,6 +251,45 @@ export const DocumentationModal = ({
                 color: #0369a1 !important;
                 font-size: 1.1rem !important;
               }
+              .markdown-light-container hr {
+                border: 0 !important;
+                border-top: 1px solid #e2e8f0 !important;
+                margin: 3rem 0 !important;
+              }
+              .markdown-light-container table {
+                width: 100% !important;
+                border-collapse: separate !important;
+                border-spacing: 0 !important;
+                margin: 2.5rem 0 !important;
+                border: 1px solid #e2e8f0 !important;
+                border-radius: 1rem !important;
+                overflow: hidden !important;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+              }
+              .markdown-light-container th {
+                background-color: #f8fafc !important;
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 1rem 1.5rem !important;
+                text-align: left !important;
+                font-size: 0.85rem !important;
+                font-weight: 800 !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.05em !important;
+                color: #0072ff !important;
+              }
+              .markdown-light-container td {
+                padding: 1rem 1.5rem !important;
+                border-bottom: 1px solid #f1f5f9 !important;
+                font-size: 0.95rem !important;
+                color: #475569 !important;
+                line-height: 1.5 !important;
+              }
+              .markdown-light-container tr:last-child td {
+                border-bottom: none !important;
+              }
+              .markdown-light-container tr:hover td {
+                background-color: #f8fafc !important;
+              }
               .custom-light-scrollbar::-webkit-scrollbar {
                 width: 6px;
               }
