@@ -203,7 +203,7 @@ export default function ScansHistory() {
               <Search className="w-6 h-6" />
               <span className="text-xs font-black uppercase tracking-[0.3em]">Scan Management</span>
             </div>
-            <h1 className="text-4xl font-black text-foreground">{t("sca_scans") || t("Software Composition Analysis") || "SCA Scans"}</h1>
+            <h1 className="text-4xl font-black text-foreground">{t("Software Composition Analysis Scans") || t("sca_scans") || "SCA Scans"}</h1>
             <p className="text-gray-500 max-w-xl">
               {language === "ko" ? "모든 자동화된 보안 평가 기록을 관리합니다." : "Manage all automated security assessment records."}
             </p>

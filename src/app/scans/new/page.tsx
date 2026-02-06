@@ -66,7 +66,7 @@ export default function NewScan() {
     async function fetchData() {
       try {
         const [configsRes, projectsRes] = await Promise.all([
-          fetch("/api/configs"),
+          fetch("/api/configs?folder=profile&type=yaml"),
           fetch("/api/projects?limit=1000")
         ]);
 
@@ -100,7 +100,7 @@ export default function NewScan() {
 
   const fetchConfigs = async (selectNew?: string) => {
     try {
-      const res = await fetch("/api/configs");
+      const res = await fetch("/api/configs?folder=profile&type=yaml");
       const data = await res.json();
       setConfigs(data.configs || []);
       if (selectNew) {

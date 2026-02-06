@@ -103,7 +103,7 @@ export function ProfileCreateModal({
                 const res = await fetch("/api/configs", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(newProfile),
+                    body: JSON.stringify({ ...newProfile, folder: "profile" }),
                 });
                 if (res.ok) {
                     const data = await res.json();

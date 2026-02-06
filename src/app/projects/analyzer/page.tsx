@@ -45,7 +45,7 @@ export default function AnalyzerPage() {
     const fetchResults = useCallback(async () => {
         try {
             setLoading(true);
-            const res = await fetch("/api/configs?type=txt");
+            const res = await fetch("/api/configs?folder=analyzer-result&type=txt");
             if (res.status === 401) {
                 router.push("/login?callback=/projects/analyzer");
                 return;
@@ -100,7 +100,7 @@ export default function AnalyzerPage() {
         setResultLoading(true);
         setShowViewModal(true);
         try {
-            const res = await fetch(`/api/configs?filename=${encodeURIComponent(filename)}`);
+            const res = await fetch(`/api/configs?folder=analyzer-result&filename=${encodeURIComponent(filename)}`);
             const data = await res.json();
             if (res.ok) {
                 setViewingResult({
@@ -129,7 +129,8 @@ export default function AnalyzerPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     name: viewingResult.name,
-                    content: newContent
+                    content: newContent,
+                    folder: "analyzer-result"
                 }),
             });
             if (res.ok) {
@@ -153,7 +154,7 @@ export default function AnalyzerPage() {
         if (!confirm(`Are you sure you want to delete analysis result "${filename}"?`)) return;
 
         try {
-            const res = await fetch(`/api/configs?filename=${encodeURIComponent(filename)}`, {
+            const res = await fetch(`/api/configs?folder=analyzer-result&filename=${encodeURIComponent(filename)}`, {
                 method: "DELETE",
             });
 

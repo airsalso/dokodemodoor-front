@@ -40,7 +40,7 @@ export default function ProfilesPage() {
     const fetchConfigs = useCallback(async () => {
         try {
             setLoading(true);
-            const res = await fetch("/api/configs");
+            const res = await fetch("/api/configs?folder=profile&type=yaml");
             if (res.status === 401) {
                 router.push("/login?callback=/projects/profiles");
                 return;
@@ -91,7 +91,7 @@ export default function ProfilesPage() {
         setActionLoading(true);
         setError(null);
         try {
-            const res = await fetch(`/api/configs?filename=${encodeURIComponent(filename)}`);
+            const res = await fetch(`/api/configs?folder=profile&filename=${encodeURIComponent(filename)}`);
             const data = await res.json();
             if (res.ok) {
                 setEditingProfile({
@@ -127,7 +127,7 @@ export default function ProfilesPage() {
 
         setActionLoading(true);
         try {
-            const res = await fetch(`/api/configs?filename=${encodeURIComponent(filename)}`, {
+            const res = await fetch(`/api/configs?folder=profile&filename=${encodeURIComponent(filename)}`, {
                 method: "DELETE",
             });
 

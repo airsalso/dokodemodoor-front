@@ -8,8 +8,8 @@ import fs from "fs";
 import { getActiveScan, setActiveScan, removeActiveScan, getAllActiveScans, type ActiveScan } from "@/lib/active-scan";
 
 export async function POST(req: Request) {
-  const { targetUrl, sourcePath, config, scanId: existingScanId, type = "PENTEST" } = (await req.json()) as {
-    targetUrl: string;
+  const { targetUrl: rawTargetUrl, sourcePath, config, scanId: existingScanId, type = "PENTEST" } = (await req.json()) as {
+    targetUrl?: string;
     sourcePath: string;
     config: string;
     scanId?: string;
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
   }
 
   const scanId = existingScanId || (type === "SCA" ? `SCA-${new Date().getTime()}` : `SCAN-${new Date().getTime()}`);
-  const configPath = type === "SCA" ? config : `configs/${config}`;
+  const configPath = type === "SCA" ? `configs/mcp/${config}` : `configs/profile/${config}`;
 
   // Log preloading: Split into lines to maintain shifting logic
   let preloadedLogs: string[] = [];
@@ -48,6 +48,8 @@ export async function POST(req: Request) {
     preloadedLogs = lines.map(l => l + "\n");
     preloadedLogs.push("--- Scan Restarted ---\n");
   }
+
+  const targetUrl = rawTargetUrl || "http://localhost";
 
   const scanData: ActiveScan = {
     id: scanId,
@@ -112,8 +114,13 @@ export async function POST(req: Request) {
   const STORE_PATH = process.env.STORE_PATH || `${engineDir}/.dokodemodoor-store.json`;
   const script = type === "SCA" ? "./osv-scanner.mjs" : "./dokodemodoor.mjs";
   const scriptArgs = type === "SCA"
-    ? [targetUrl, sourcePath, configPath]
+    ? [sourcePath, targetUrl, configPath]
     : [targetUrl, sourcePath, "--config", configPath];
+
+  console.log(`[Scan] Starting ${type} scan (ID: ${scanId})`);
+  console.log(`[Scan] Target: ${targetUrl}`);
+  console.log(`[Scan] Source: ${sourcePath}`);
+  console.log(`[Scan] Execution: npx zx ${script} ${scriptArgs.join(" ")}`);
 
   const proc = spawn("npx", [
     "zx",

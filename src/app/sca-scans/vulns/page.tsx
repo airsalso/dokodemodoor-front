@@ -123,6 +123,7 @@ export default function VulnerabilitiesPage() {
                 v.title.toLowerCase().includes(deferredSearch.toLowerCase()) ||
                 v.type.toLowerCase().includes(deferredSearch.toLowerCase()) ||
                 (v.scan?.targetUrl || "").toLowerCase().includes(deferredSearch.toLowerCase()) ||
+                (v.scan?.projectName || "").toLowerCase().includes(deferredSearch.toLowerCase()) ||
                 v.scanId.toLowerCase().includes(deferredSearch.toLowerCase())
             )
             .sort((a, b) => {
@@ -413,7 +414,7 @@ export default function VulnerabilitiesPage() {
                                     <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 blur-[100px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
                                 </div>
 
-                                <div className="p-12 overflow-y-auto custom-scrollbar space-y-10">
+                                <div className="flex-1 p-12 overflow-y-auto custom-scrollbar space-y-10">
                                     {/* Description Section */}
                                     <section className="space-y-4">
                                         <h3 className="text-[13px] font-black uppercase tracking-[0.3em] text-blue-600 flex items-center gap-3 ml-1">
@@ -476,11 +477,11 @@ export default function VulnerabilitiesPage() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-4">
                                         <div className="p-6 bg-white border border-blue-100 rounded-[2rem] shadow-sm flex items-center gap-5">
                                             <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-500">
-                                                <Globe className="w-6 h-6" />
+                                                <Layers className="w-6 h-6" />
                                             </div>
                                             <div className="min-w-0">
-                                                <p className="text-[11px] font-black uppercase text-slate-400 tracking-widest mb-1">Target Scan URL</p>
-                                                <p className="text-[15px] font-bold text-slate-700 truncate">{selectedVuln.scan?.targetUrl || "N/A"}</p>
+                                                <p className="text-[11px] font-black uppercase text-slate-400 tracking-widest mb-1">Target Project</p>
+                                                <p className="text-[15px] font-bold text-slate-700 truncate">{selectedVuln.scan?.projectName || "Unknown Project"}</p>
                                             </div>
                                         </div>
                                         <div className="p-6 bg-white border border-blue-100 rounded-[2rem] shadow-sm flex items-center gap-5">
@@ -557,10 +558,16 @@ const VulnCard = ({ vuln, getSeverityBadge, onView }: VulnCardProps) => {
                     {/* Target & Scan Info */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Target URL</span>
+                            <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Project Name</span>
                             <div className="flex items-center gap-2 text-sm font-mono text-gray-400">
-                                <ExternalLink className="w-3.5 h-3.5 text-primary/50 flex-shrink-0" />
-                                <span className="truncate">{vuln.scan?.targetUrl || "Unknown Target"}</span>
+                                <Layers className="w-3.5 h-3.5 text-primary/50 flex-shrink-0" />
+                                <Link
+                                    href={`/sca-scans/${vuln.scanId}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="truncate hover:text-primary hover:underline transition-colors"
+                                >
+                                    {vuln.scan?.projectName || "Unknown Project"}
+                                </Link>
                             </div>
                         </div>
 

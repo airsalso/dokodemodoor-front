@@ -83,7 +83,7 @@ export default function NewScan() {
     async function fetchData() {
       try {
         const [configsRes, projectsRes] = await Promise.all([
-          fetch("/api/configs?type=json"),
+          fetch("/api/configs?type=json&folder=mcp"),
           fetch("/api/projects?limit=1000")
         ]);
 
@@ -97,8 +97,7 @@ export default function NewScan() {
 
         setConfigs(rawConfigs);
         if (rawConfigs.length > 0) {
-          const defaultInternal = rawConfigs.find((c: string) => c === "None.yaml") || rawConfigs[0];
-          setFormData(prev => ({ ...prev, config: String(defaultInternal) }));
+          setFormData(prev => ({ ...prev, config: String(rawConfigs[0]) }));
         }
 
         setProjects(rawProjects);
@@ -135,7 +134,7 @@ export default function NewScan() {
       const match = content.match(/^name:\s*(['"]?)([^'"\n\r]+)\1/m);
       if (match && match[2]) {
         const base = match[2].trim();
-        return base.endsWith(".yaml") || base.endsWith(".yml") ? base : `${base}.yaml`;
+        return base.endsWith(".json") ? base : `${base}.json`;
       }
       return "";
     } catch { return ""; }
@@ -143,14 +142,13 @@ export default function NewScan() {
 
   const fetchConfigs = async (selectNew?: string) => {
     try {
-      const res = await fetch("/api/configs?type=json");
+      const res = await fetch("/api/configs?type=json&folder=mcp");
       const data = await res.json();
       setConfigs(data.configs || []);
       if (selectNew) {
         setFormData(prev => ({ ...prev, config: selectNew }));
       } else if (!formData.config && data.configs?.length > 0) {
-        const defaultInternal = data.configs.find((c: string) => c === "None.yaml") || data.configs[0];
-        setFormData(prev => ({ ...prev, config: defaultInternal }));
+        setFormData(prev => ({ ...prev, config: data.configs[0] }));
       }
     } catch (err) {
       console.error("Failed to fetch configs", err);
@@ -196,7 +194,8 @@ export default function NewScan() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...newProfile,
-          name: finalName
+          name: finalName,
+          folder: "mcp"
         }),
       });
 
@@ -239,7 +238,7 @@ export default function NewScan() {
     setDocsLoading(true);
     setShowDocsModal(true);
     try {
-      const res = await fetch("/api/docs/profile-generator");
+      const res = await fetch("/api/docs/sca-guide");
       const data = await res.json();
       if (data.content) {
         setDocContent(data.content);
@@ -337,23 +336,6 @@ export default function NewScan() {
             </motion.div>
           )}
           <div className="glass-card !overflow-visible p-8 space-y-8">
-            {/* Target URL */}
-            <div className="space-y-3">
-              <label className="text-sm font-bold flex items-center gap-2 text-gray-300">
-                <Globe className="w-4 h-4 text-primary" />
-                Target Web Application URL
-              </label>
-              <input
-                type="url"
-                required
-                value={formData.targetUrl || ""}
-                onChange={(e) => setFormData({ ...formData, targetUrl: e.target.value })}
-                placeholder={process.env.NEXT_PUBLIC_DEFAULT_TARGET_URL || "http://localhost:3000"}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-mono"
-              />
-              <p className="text-xs text-gray-500">The live URL of the application to test.</p>
-            </div>
-
             {/* Project Selection */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -605,7 +587,7 @@ export default function NewScan() {
       <DocumentationModal
         isOpen={showDocsModal}
         onClose={() => setShowDocsModal(false)}
-        title="Profile Generator Guide"
+        title="DOKODEMODOOR SCA Analysis"
         content={docContent}
         isLoading={docsLoading}
       />
