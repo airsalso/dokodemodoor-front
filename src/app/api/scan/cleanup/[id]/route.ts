@@ -78,7 +78,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     // Execute cleanup command with session ID as argument (not --session flag)
     const command = `npx zx ./dokodemodoor.mjs --cleanup ${sessionId}`;
     console.log(`[Cleanup] Executing: ${command}`);
-    const { stdout, stderr } = await execPromise(command, { cwd: ENGINE_DIR });
+    const { stdout, stderr } = await execPromise(command, {
+      cwd: ENGINE_DIR,
+      env: { ...process.env, DOKODEMODOOR_STORE: STORE_PATH }
+    });
     console.log(`[Cleanup] Output:`, { stdout, stderr });
 
     // Update DB to reflect cleanup (set vulnerabilities to 0 since files are gone)

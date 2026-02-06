@@ -54,7 +54,7 @@ function ScanDetailContent() {
 
   useEffect(() => {
     if (!authLoading && !authenticated) {
-      router.push(`/login?callback=/scans/${id}`);
+      router.push(`/login?callback=/sca-scans/${id}`);
     }
   }, [id, router, authenticated, authLoading]);
 
@@ -132,50 +132,22 @@ function ScanDetailContent() {
     }
   };
 
-  /*
-  const handleTranslate = async () => {
-    if (!confirm("Do you want to translate the final report to Korean? This may take a few minutes using AI.")) return;
-
-    setTranslating(true);
-    try {
-      const res = await fetch(`/api/scan/translate/${id}`, { method: "POST" });
-      const result = await res.json();
-      if (res.ok) {
-        // Force refresh data to show logs and start polling
-        setData(prev => prev ? { ...prev, status: "translating" } : null);
-      } else {
-        alert(result.error || "Translation failed to start");
-        setTranslating(false);
-      }
-    } catch (err) {
-      console.error("Translate error:", err);
-      alert("Connection error");
-      setTranslating(false);
-    }
-  };
-  */
-
   const renderStatusLines = (content: string) => {
     const lines = content.split('\n');
     return lines.map((line, i) => {
-      // Regex to detect agent lines: ICON + Space + AgentName + space(s) + [STATUS]
-      // Support trailing info like [40.3s]
       const agentMatch = line.match(/^\s*([^\w\s]{1,4})\s+([\w\s-]+?)\s+\[([\w\s-]+)\]/);
       if (agentMatch) {
         const name = agentMatch[2].trim();
         const status = agentMatch[3].trim().toUpperCase();
 
-        // Support both ROLLED-BACK and ROLLED BACK
         const canRerun = ["PENDING", "FAILED", "ROLLED-BACK", "ROLLED BACK", "COMPLETED", "SKIPPED"].includes(status);
         const canRollback = status === "COMPLETED";
 
-        // const isReportAgent = name.toLowerCase().includes('report');
         const isAgentActive = !!actionLoading?.startsWith(name);
 
         return (
           <div key={i} className="group relative flex items-center hover:bg-white/5 px-2 py-0.5 rounded cursor-default transition-colors overflow-hidden">
             <span className="flex-1 whitespace-pre">{line}</span>
-            {/* Action buttons - hide when active or translating */}
             {!isAgentActive && (canRerun || canRollback) && (
               <div className="absolute right-2 opacity-0 group-hover:opacity-100 flex items-center gap-1 bg-white/5 backdrop-blur-md px-2 py-1.5 rounded-xl border border-white/10 shadow-2xl transition-all scale-95 group-hover:scale-100 z-20">
                 {canRerun && (
@@ -232,7 +204,8 @@ function ScanDetailContent() {
           targetUrl: data.targetUrl,
           sourcePath: data.sourcePath || "",
           config: data.config,
-          scanId: id // Pass current ID to reuse it instead of creating a new one
+          scanId: id,
+          type: "SCA"
         }),
       });
 
@@ -241,8 +214,6 @@ function ScanDetailContent() {
         alert(result.error || "Failed to restart scan");
         setRestarting(false);
       } else {
-        // ID is the same, so router.push doesn't trigger a refresh.
-        // Manually update state via SWR mutate
         refreshDetail();
         setRestarting(false);
       }
@@ -252,8 +223,6 @@ function ScanDetailContent() {
       setRestarting(false);
     }
   };
-
-
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -375,7 +344,6 @@ function ScanDetailContent() {
         alert(data.error || "Failed to stop scan");
         setStopping(false);
       } else {
-        // Optimistic update via mutate
         refreshDetail();
         setTranslating(false);
         setStopping(false);
@@ -402,13 +370,11 @@ function ScanDetailContent() {
       <Navbar />
 
       <main className="flex-1 flex flex-col max-w-[1800px] mx-auto px-10 py-10 w-full gap-8 relative z-10 overflow-hidden min-h-0">
-        {/* Page Header Area */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10">
-          {/* Left: Branding & Status */}
           <div className="flex flex-col gap-6">
             <div className="flex items-start gap-6">
               <Link
-                href="/scans"
+                href="/sca-scans"
                 className="mt-2 group p-4 bg-rose-500/5 border border-rose-500/20 rounded-2xl text-rose-400 hover:text-white hover:bg-rose-500/20 hover:border-rose-500/40 transition-all active:scale-95 shadow-lg shadow-rose-500/5 hover:shadow-rose-500/10"
                 title={t('back to history') || 'Back to History'}
               >
@@ -469,8 +435,10 @@ function ScanDetailContent() {
             </div>
           </div>
 
-          {/* Right: Metrics & Actions */}
           <div className="flex flex-col items-end gap-6">
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-black uppercase tracking-[0.3em] text-primary">SCA Assessment Details</span>
+            </div>
             <div className="flex items-center gap-3">
               {data && (
                 <div className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-orange-500/5 border border-orange-500/20 text-xs font-black uppercase tracking-widest text-orange-600 shadow-inner">
@@ -484,7 +452,7 @@ function ScanDetailContent() {
                           return formatDuration(Math.round((Date.now() - data.startTime) / 1000));
                         }
                         if (data.duration && data.duration !== "...") {
-                          return formatDuration(data.duration);
+                           return formatDuration(data.duration);
                         }
                         if (data.startTime && data.endTime) {
                           const diff = Math.round((data.endTime - data.startTime) / 1000);
@@ -614,7 +582,7 @@ function ScanDetailContent() {
               )}
 
               <Link
-                href={`/scans/vulns?scanId=${id}`}
+                href={`/sca-scans/vulns?scanId=${id}`}
                 className="px-6 py-4 rounded-2xl bg-rose-500/5 border border-rose-500/10 hover:bg-rose-500/10 hover:border-rose-500/30 transition-all flex items-center gap-3 font-black text-sm tracking-tight text-rose-400"
               >
                 <AlertTriangle className="w-5 h-5 text-rose-400" />
@@ -640,13 +608,11 @@ function ScanDetailContent() {
           </div>
         </div>
 
-        {/* Terminal Container */}
         <div
           className={`flex-1 flex flex-col rounded-[32px] overflow-hidden shadow-2xl border transition-all duration-500 min-h-0 ${
             isBright ? 'border-gray-200 bg-white shadow-gray-200/50' : 'border-white/5 bg-background'
           }`}
         >
-          {/* Terminal Header Bar */}
           <div
             className={`flex items-center justify-between px-8 py-5 border-b transition-all duration-500 ${
               terminalTheme === 'beige'
@@ -682,7 +648,6 @@ function ScanDetailContent() {
             </div>
           </div>
 
-          {/* Actual Terminal / Archive Viewer */}
           <div
             className="flex-1 transition-all duration-500 min-h-0"
             style={{ backgroundColor: currentTheme.background }}
@@ -699,7 +664,6 @@ function ScanDetailContent() {
         </div>
       </main>
 
-      {/* Status Modal */}
       <AnimatePresence>
         {showStatus && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
@@ -722,7 +686,7 @@ function ScanDetailContent() {
                     <Activity className="w-7 h-7" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-black tracking-tight">{isKo ? "펜테스트 상태 조회" : "PENTEST STATUS"}</h2>
+                    <h2 className="text-2xl font-black tracking-tight">{isKo ? "SCA 스캔 상태 조회" : "SCA SCAN STATUS"}</h2>
                     <p className="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-black">{t("live_engine_trace") || "Live Engine Trace"}</p>
                   </div>
                 </div>

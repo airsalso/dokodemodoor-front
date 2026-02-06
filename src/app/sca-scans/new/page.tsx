@@ -2,7 +2,8 @@
 
 import { Navbar } from "@/components/Navbar";
 import { motion } from "framer-motion";
-import { Globe, HardDrive, FileCode, Play, ChevronLeft, Loader2, AlertTriangle, Plus, Github, FileText } from "lucide-react";
+import { Globe, HardDrive, FileCode, Play, ChevronLeft, Loader2, AlertTriangle, Plus, X, Save, Github, FileText } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -11,7 +12,6 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { SearchableCollectionModal } from "@/components/SearchableCollectionModal";
 import { DocumentationModal } from "@/components/DocumentationModal";
-import { ProfileCreateModal } from "@/components/ProfileCreateModal";
 import { ProjectCreateModal } from "@/components/ProjectCreateModal";
 
 type Project = {
@@ -42,6 +42,23 @@ export default function NewScan() {
 
   // New Profile Modal States
   const [showNewModal, setShowNewModal] = useState(false);
+  const [newProfile, setNewProfile] = useState({
+    name: "",
+    content: `# Example MCP file for BlackDuck
+{
+  "mcpServers": {
+    "blackduck": {
+      "command": "node",
+      "args": ["/path/to/your/blackduck-mcp-server/index.js"],
+      "env": {
+        "BLACKDUCK_URL": "https://your-blackduck-server.com",
+        "BLACKDUCK_API_TOKEN": "your-api-token"
+      }
+    }
+  }
+}`
+  });
+  const [savingConfig, setSavingConfig] = useState(false);
 
   // Documentation State
   const [showDocsModal, setShowDocsModal] = useState(false);
@@ -54,7 +71,7 @@ export default function NewScan() {
     if (authLoading) return;
 
     if (!authenticated) {
-      router.push("/login?callback=/scans/new");
+      router.push("/login?callback=/sca-scans/new");
       return;
     }
 
@@ -66,7 +83,7 @@ export default function NewScan() {
     async function fetchData() {
       try {
         const [configsRes, projectsRes] = await Promise.all([
-          fetch("/api/configs"),
+          fetch("/api/configs?type=json"),
           fetch("/api/projects?limit=1000")
         ]);
 
@@ -79,15 +96,21 @@ export default function NewScan() {
         const rawProjects = projectsData.projects || projectsData.data || [];
 
         setConfigs(rawConfigs);
+        if (rawConfigs.length > 0) {
+          const defaultInternal = rawConfigs.find((c: string) => c === "None.yaml") || rawConfigs[0];
+          setFormData(prev => ({ ...prev, config: String(defaultInternal) }));
+        }
+
         setProjects(rawProjects);
 
         const targetPath = searchParams.get("targetPath");
         if (targetPath) {
-          const selected = rawProjects.find((p: Project) => p.localPath === targetPath);
+          setFormData(prev => ({ ...prev, sourcePath: targetPath || "" }));
+        } else if (projectsData.projects?.length > 0) {
           setFormData(prev => ({
             ...prev,
-            sourcePath: targetPath || "",
-            targetUrl: selected?.repoUrl || prev.targetUrl || ""
+            sourcePath: projectsData.projects[0].localPath,
+            targetUrl: projectsData.projects[0].repoUrl || ""
           }));
         }
       } catch (err) {
@@ -98,13 +121,36 @@ export default function NewScan() {
   }, [router, searchParams, authenticated, authLoading, user]);
 
 
+  const deriveProfileName = (content: string) => {
+    if (!content) return "";
+    try {
+      if (content.trim().startsWith("{")) {
+        // Try to find a name in JSON
+        try {
+          const json = JSON.parse(content);
+          if (json.name) return json.name.endsWith(".json") ? json.name : `${json.name}.json`;
+        } catch {}
+        return "mcp-config.json";
+      }
+      const match = content.match(/^name:\s*(['"]?)([^'"\n\r]+)\1/m);
+      if (match && match[2]) {
+        const base = match[2].trim();
+        return base.endsWith(".yaml") || base.endsWith(".yml") ? base : `${base}.yaml`;
+      }
+      return "";
+    } catch { return ""; }
+  };
+
   const fetchConfigs = async (selectNew?: string) => {
     try {
-      const res = await fetch("/api/configs");
+      const res = await fetch("/api/configs?type=json");
       const data = await res.json();
       setConfigs(data.configs || []);
       if (selectNew) {
         setFormData(prev => ({ ...prev, config: selectNew }));
+      } else if (!formData.config && data.configs?.length > 0) {
+        const defaultInternal = data.configs.find((c: string) => c === "None.yaml") || data.configs[0];
+        setFormData(prev => ({ ...prev, config: defaultInternal }));
       }
     } catch (err) {
       console.error("Failed to fetch configs", err);
@@ -135,9 +181,53 @@ export default function NewScan() {
     fetchProjects(project.localPath);
   };
 
-  const handleSaveConfig = async (filename?: string) => {
-    if (filename) {
-      await fetchConfigs(filename);
+  const handleSaveConfig = async () => {
+    const finalName = newProfile.name.trim() || deriveProfileName(newProfile.content);
+
+    if (!finalName || !newProfile.content) {
+      alert("Please provide both name and YAML content.");
+      return;
+    }
+
+    setSavingConfig(true);
+    try {
+      const res = await fetch("/api/configs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...newProfile,
+          name: finalName
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        await fetchConfigs(data.filename);
+        setShowNewModal(false);
+        setNewProfile({
+          name: "",
+          content: `# Example MCP file for BlackDuck
+ {
+   "mcpServers": {
+     "blackduck": {
+       "command": "node",
+       "args": ["/path/to/your/blackduck-mcp-server/index.js"],
+       "env": {
+         "BLACKDUCK_URL": "https://your-blackduck-server.com",
+         "BLACKDUCK_API_TOKEN": "your-api-token"
+       }
+     }
+   }
+ }`
+        });
+      } else {
+        alert(data.error || "Failed to save configuration");
+      }
+    } catch (err) {
+      console.error("Save config error:", err);
+      alert("Connection error");
+    } finally {
+      setSavingConfig(false);
     }
   };
 
@@ -173,12 +263,12 @@ export default function NewScan() {
       const res = await fetch("/api/scan/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, type: "SCA" }),
       });
 
       const data = await res.json();
       if (data.scanId) {
-        router.push(`/scans/${data.scanId}`);
+        router.push(`/sca-scans/${data.scanId}`);
       } else if (data.error) {
         setError(data.error);
         setLoading(false);
@@ -209,14 +299,14 @@ export default function NewScan() {
         <div className="mb-12 flex items-start justify-between gap-12">
           <div className="flex items-start gap-6 flex-1">
             <Link
-              href="/scans"
+              href="/sca-scans"
               className="mt-1 group p-4 bg-rose-500/5 border border-rose-500/20 rounded-2xl text-rose-400 hover:text-white hover:bg-rose-500/20 hover:border-rose-500/40 transition-all active:scale-95 shadow-lg shadow-rose-500/5 hover:shadow-rose-500/10"
               title={t('back to history') || 'Back to History'}
             >
               <ChevronLeft className="w-7 h-7 transition-transform group-hover:-translate-x-1" />
             </Link>
             <div className="space-y-4 min-w-0">
-              <h1 className="text-5xl font-black text-foreground leading-none">Start New Pentest</h1>
+              <h1 className="text-5xl font-black text-foreground leading-none">Start New SCA</h1>
               <p className="text-gray-400 max-w-xl font-medium text-lg leading-relaxed">
                 Configure your targets and parameters for an automated security assessment.
               </p>
@@ -269,7 +359,7 @@ export default function NewScan() {
               <div className="flex items-center justify-between">
                 <label className="text-sm font-bold flex items-center gap-2 text-gray-300">
                   <HardDrive className="w-4 h-4 text-accent" />
-                  Target Project (Source Code)
+                  Target Project (Open Source)
                 </label>
                 <button
                   type="button"
@@ -312,7 +402,7 @@ export default function NewScan() {
               <div className="flex items-center justify-between">
                 <label className="text-sm font-bold flex items-center gap-2 text-gray-300">
                   <FileCode className="w-4 h-4 text-emerald-400" />
-                  {t("project_profiles")}
+                  MCP Profile
                 </label>
                 <div className="flex items-center gap-2">
                   <button
@@ -357,7 +447,7 @@ export default function NewScan() {
                   <ChevronLeft className="w-5 h-5 text-gray-600 rotate-180 group-hover:text-emerald-400 transition-colors" />
                 </div>
               </div>
-              <p className="text-xs text-gray-500">Select the scan ruleset and AI parameters.</p>
+              <p className="text-xs text-gray-500">Select the MCP Profile.</p>
             </div>
           </div>
 
@@ -374,18 +464,98 @@ export default function NewScan() {
             ) : (
               <>
                 <Play className="w-8 h-8 fill-current" />
-                Execute Pentest
+                Execute SCA Scan
               </>
             )}
           </button>
         </form>
       </div>
 
-      <ProfileCreateModal
-        isOpen={showNewModal}
-        onClose={() => setShowNewModal(false)}
-        onSuccess={handleSaveConfig}
-      />
+      <AnimatePresence>
+        {showNewModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowNewModal(false)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-md cursor-pointer"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-2xl modal-container bg-card-muted border border-white/10 shadow-[0_32px_80px_-20px_rgba(0,0,0,0.4)] flex flex-col max-h-[90vh] overflow-hidden"
+            >
+              <div className="p-8 border-b border-white/5 flex items-center justify-between bg-white/5">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-400">
+                    <Plus className="w-7 h-7" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-black">{t('mcp_config')}</h2>
+                    <p className="text-xs text-muted-foreground uppercase tracking-widest font-black">{t('mcp_desc')}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowNewModal(false)}
+                  className="p-3 rounded-2xl hover-btn-secondary transition-all text-muted-foreground hover:text-white"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="p-8 space-y-6 overflow-y-auto custom-scrollbar">
+                <div className="space-y-2">
+                  <label className="text-xs font-black uppercase tracking-widest text-gray-500">
+                    {t('profile_name')}
+                    <span className="text-gray-700 italic lowercase font-normal ml-2">
+                      (optional, defaults to {deriveProfileName(newProfile.content) || "filename.json"})
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    value={newProfile.name || ""}
+                    onChange={(e) => setNewProfile({ ...newProfile, name: e.target.value })}
+                    placeholder={deriveProfileName(newProfile.content) || "my-custom-mcp.json"}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all font-mono font-medium text-foreground"
+                  />
+                </div>
+                <div className="space-y-2 flex-1 flex flex-col">
+                  <label className="text-xs font-black uppercase tracking-widest text-gray-500">{t('json_content')}</label>
+                  <textarea
+                    value={newProfile.content || ""}
+                    onChange={(e) => setNewProfile({ ...newProfile, content: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 font-mono text-sm h-64 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all resize-none archive-scrollbar font-medium text-foreground"
+                    spellCheck={false}
+                  />
+                </div>
+              </div>
+
+              <div className="p-8 bg-white/5 border-t border-white/5 flex gap-4">
+                <button
+                  onClick={() => setShowNewModal(false)}
+                  className="flex-1 py-5 rounded-2xl font-black bg-white/5 text-muted-foreground hover-btn-secondary hover:text-white transition-all"
+                >
+                  {t('cancel')}
+                </button>
+                <button
+                  onClick={handleSaveConfig}
+                  disabled={savingConfig}
+                  className="flex-[2] py-5 rounded-2xl font-black btn-accent transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {savingConfig ? (
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                  ) : (
+                    <Save className="w-6 h-6" />
+                  )}
+                  {t('save_config')}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <ProjectCreateModal
         isOpen={showProjectModal}
@@ -410,8 +580,7 @@ export default function NewScan() {
           setFormData({
             ...formData,
             sourcePath: val,
-            targetUrl: selectedProject?.repoUrl || formData.targetUrl || "",
-            config: "" // Reset profile when project changes
+            targetUrl: selectedProject?.repoUrl || formData.targetUrl || ""
           });
         }}
         placeholder="Search projects by name or path..."
@@ -420,27 +589,15 @@ export default function NewScan() {
       <SearchableCollectionModal
         isOpen={showConfigPicker}
         onClose={() => setShowConfigPicker(false)}
-        title="Configuration Profile"
-        description="Select the ruleset and AI agent configurations for this security scan."
-        items={(() => {
-          const projectFolder = formData.sourcePath.split('/').pop()?.toLowerCase();
-          const projectName = projects.find(p => p.localPath === formData.sourcePath)?.name?.toLowerCase();
-
-          const filtered = configs.filter(c => {
-            if (!formData.sourcePath) return true; // Show all if no project selected? Or none? User said "correspond to selected project"
-            const configName = c.toLowerCase();
-            return (projectFolder && configName.includes(projectFolder)) ||
-                   (projectName && configName.includes(projectName.replace(/\s+/g, '-')));
-          });
-
-          return filtered.map(c => ({
-            id: String(c || ""),
-            title: String(c || "Unknown Profile"),
-            subtitle: "YAML Configuration File",
-            metadata: `Scan rules and parameters`,
-            icon: <FileCode className="w-6 h-6" />
-          }));
-        })()}
+        title="MCP Profile"
+        description="Select the MCP server configurations for this security scan."
+        items={configs.map(c => ({
+          id: String(c || ""),
+          title: String(c || "Unknown Profile"),
+          subtitle: "JSON Configuration File",
+          metadata: `Scan rules and parameters`,
+          icon: <FileCode className="w-6 h-6" />
+        }))}
         selectedValue={formData.config}
         onSelect={(val) => setFormData({ ...formData, config: val })}
         placeholder="Search profiles..."

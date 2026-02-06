@@ -80,7 +80,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     // Use FULL session ID from DB
     const command = `npx zx ./dokodemodoor.mjs --status --session ${sessionId}`;
     console.log(`[Status] Executing: ${command}`);
-    const { stdout, stderr } = await execPromise(command, { cwd: ENGINE_DIR });
+    const { stdout, stderr } = await execPromise(command, {
+      cwd: ENGINE_DIR,
+      env: { ...process.env, DOKODEMODOOR_STORE: STORE_PATH }
+    });
 
     return NextResponse.json({
       status: stdout || stderr,

@@ -35,7 +35,8 @@ export default function ScansHistory() {
     page: currentPage,
     limit: ITEMS_PER_PAGE,
     query: deferredSearch,
-    status: statusFilter
+    status: statusFilter,
+    type: "SCA"
   });
 
   const [currentTime, setCurrentTime] = useState(0);
@@ -75,7 +76,7 @@ export default function ScansHistory() {
 
   useEffect(() => {
     if (!authLoading && !authenticated) {
-      router.push("/login?callback=/scans");
+      router.push("/login?callback=/sca-scans");
     }
   }, [router, authenticated, authLoading]);
 
@@ -120,7 +121,8 @@ export default function ScansHistory() {
           targetUrl: scan.targetUrl,
           sourcePath: scan.sourcePath || "",
           config: scan.config,
-          scanId: scan.id
+          scanId: scan.id,
+          type: "SCA"
         }),
       });
 
@@ -171,18 +173,18 @@ export default function ScansHistory() {
               <Search className="w-6 h-6" />
               <span className="text-xs font-black uppercase tracking-[0.3em]">Scan Management</span>
             </div>
-            <h1 className="text-4xl font-black text-foreground">{t("scans_title")}</h1>
+            <h1 className="text-4xl font-black text-foreground">{t("sca_scans") || t("Software Composition Analysis") || "SCA Scans"}</h1>
             <p className="text-gray-500 max-w-xl">
               {language === "ko" ? "모든 자동화된 보안 평가 기록을 관리합니다." : "Manage all automated security assessment records."}
             </p>
           </div>
           {user?.role !== 'USER' && (
             <Link
-              href="/scans/new"
+              href="/sca-scans/new"
               className="w-full md:w-auto px-10 py-4 btn-accent rounded-2xl font-black flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all whitespace-nowrap"
             >
               <Plus className="w-5 h-5" />
-              {t("start_new_scan")}
+              {t("start New scan") || "Start New Scan"}
             </Link>
           )}
         </header>
@@ -450,7 +452,7 @@ type ScanCardProps = {
 const ScanCard = React.memo(({ scan, isActive, t, language, formatDuration, userRole, onDelete, onRestart, router }: ScanCardProps) => {
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.98 }} transition={{ duration: 0.2 }}>
-      <Link href={`/scans/${scan.id}`} className={`group block p-6 glass-card hover:bg-white/5 transition-all border-white/5 hover:border-primary/30 ${isActive ? 'bg-primary/5 border-primary/20 shadow-2xl shadow-primary/10' : ''}`}>
+      <Link href={`/sca-scans/${scan.id}`} className={`group block p-6 glass-card hover:bg-white/5 transition-all border-white/5 hover:border-primary/30 ${isActive ? 'bg-primary/5 border-primary/20 shadow-2xl shadow-primary/10' : ''}`}>
         <div className="flex items-center justify-between gap-8">
           {/* Left: Status Icon + Badge */}
           <div className="flex items-center gap-4 flex-shrink-0">
@@ -511,7 +513,7 @@ const ScanCard = React.memo(({ scan, isActive, t, language, formatDuration, user
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  router.push(`/scans/vulns?scanId=${scan.id}`);
+                  router.push(`/sca-scans/vulns?scanId=${scan.id}`);
                 }}
                 className={`text-2xl font-black hover:scale-110 transition-all ${(scan.vulnerabilities ?? 0) > 0 ? 'text-rose-400 hover:text-rose-300' : 'text-emerald-400 hover:text-emerald-300'}`}
               >
@@ -541,7 +543,7 @@ const ScanCard = React.memo(({ scan, isActive, t, language, formatDuration, user
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    router.push(`/scans/${scan.id}?view=archive`);
+                    router.push(`/sca-scans/${scan.id}?view=archive`);
                   }}
                   className="p-3 rounded-xl bg-primary/10 text-primary hover:bg-primary/90 hover:text-white transition-all border border-primary/20 hover:border-primary/50"
                   title="View Archive"

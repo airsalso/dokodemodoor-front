@@ -2,6 +2,7 @@ import { type ChildProcess } from "child_process";
 
 export type ActiveScan = {
   id: string;
+  type?: string;
   target: string;
   status: "running" | "completed" | "failed" | "translating";
   startTime: number;

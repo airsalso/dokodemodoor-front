@@ -57,6 +57,7 @@ model UserSettings {
 
 model Scan {
   id              String   @id
+  type            String   @default("PENTEST")
   targetUrl       String
   sourcePath      String?
   config          String?

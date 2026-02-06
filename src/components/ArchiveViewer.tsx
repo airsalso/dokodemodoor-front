@@ -236,7 +236,7 @@ export function ArchiveViewer({ scanId, initialLogs }: ArchiveViewerProps) {
           </button>
         </div>
 
-        <div className="flex-1 overflow-auto p-0 archive-scrollbar">
+        <div className="flex-1 overflow-y-auto archive-scrollbar relative">
           <AnimatePresence mode="wait">
             <motion.div
               key={selectedReportId}
@@ -244,10 +244,10 @@ export function ArchiveViewer({ scanId, initialLogs }: ArchiveViewerProps) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
-              className="h-full"
+              className="min-h-full"
             >
               {selectedReportId === "logs" ? (
-                <div className="p-10 font-mono text-[13px] leading-relaxed relative">
+                <div className="p-10 font-mono text-[13px] leading-relaxed relative min-h-full">
                   <div className={`absolute top-0 left-0 w-full h-full pointer-events-none ${isBright ? 'bg-grid-black/[0.02]' : 'bg-grid-white/[0.02]'}`} />
                   <pre
                     className="relative z-10 whitespace-pre-wrap break-all selection:bg-primary/30"
@@ -257,16 +257,16 @@ export function ArchiveViewer({ scanId, initialLogs }: ArchiveViewerProps) {
                   </pre>
                 </div>
               ) : selectedReport?.type === 'md' ? (
-                <div className="p-6 md:p-10 w-full">
+                <div className="p-6 md:p-10 w-full min-h-full flex flex-col">
                   <div
-                    className={`px-8 md:px-12 py-12 rounded-[2.5rem] shadow-2xl relative overflow-hidden border transition-all duration-500 ${
+                    className={`px-8 md:px-12 py-12 rounded-[2.5rem] shadow-2xl relative overflow-hidden border transition-all duration-500 flex-1 ${
                       isBright ? 'border-gray-100 bg-white' : 'border-white/5 bg-white/[0.02]'
                     }`}
                     style={{ backgroundColor: isBright ? currentTheme.background : undefined }}
                   >
                     <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2" />
                     <div
-                      className={`markdown-preview-dark selection:bg-primary/30 relative z-10 transition-colors duration-500`}
+                      className={`markdown-preview-dark selection:bg-primary/30 relative z-10 transition-colors duration-500 h-full`}
                       style={{ color: currentTheme.foreground }}
                     >
                       <ReactMarkdown
@@ -352,7 +352,7 @@ export function ArchiveViewer({ scanId, initialLogs }: ArchiveViewerProps) {
                   </div>
                 </div>
               ) : (
-                <div className="p-10 font-mono text-[13px] leading-relaxed mb-20">
+                <div className="p-10 font-mono text-[13px] leading-relaxed min-h-full">
                   <pre
                     className="whitespace-pre-wrap break-all selection:bg-primary/30"
                     style={{ color: currentTheme.foreground }}

@@ -13,6 +13,7 @@ export type ScanRecord = {
   sourcePath?: string | null;
   config?: string | null;
   projectName?: string | null;
+  type?: string;
 };
 
 export type ScanStats = {
@@ -34,12 +35,13 @@ export interface ScansResponse {
   };
 }
 
-export function useScans(params: { page: number; limit: number; query: string; status: string }) {
+export function useScans(params: { page: number; limit: number; query: string; status: string; type?: string }) {
   const queryParams = new URLSearchParams({
     page: params.page.toString(),
     limit: params.limit.toString(),
     query: params.query,
     status: params.status,
+    type: params.type || "PENTEST"
   });
 
   const { data, error, mutate, isValidating } = useSWR<ScansResponse>(

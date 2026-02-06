@@ -42,7 +42,7 @@ export function Terminal({ logs }: TerminalProps) {
       theme,
       convertEol: true,
       allowTransparency: false,
-      lineHeight: 1.0,
+      lineHeight: 1.15,
       letterSpacing: 0,
       allowProposedApi: true,
       customGlyphs: true,
@@ -122,17 +122,18 @@ export function Terminal({ logs }: TerminalProps) {
 
   return (
     <div
-      className="w-full h-full min-h-[500px] flex flex-col"
+      className="w-full h-full flex flex-col overflow-hidden"
       style={{
         backgroundColor: currentTheme.background,
         color: currentTheme.foreground
       }}
     >
-      <div
-        ref={terminalRef}
-        className="w-full h-full flex-1 p-4"
-        style={{ backgroundColor: currentTheme.background }}
-      />
+      <div className="flex-1 w-full h-full p-4 pb-4 overflow-hidden">
+        <div
+          ref={terminalRef}
+          className="w-full h-full"
+        />
+      </div>
     </div>
   );
 }

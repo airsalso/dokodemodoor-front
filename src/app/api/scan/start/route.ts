@@ -3,17 +3,17 @@ import { spawn } from "child_process";
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/auth-server";
 import { processScanFindings, captureScanReports } from "@/lib/scan-utils";
-import type { Prisma } from "@prisma/client";
 import fs from "fs";
 
 import { getActiveScan, setActiveScan, removeActiveScan, getAllActiveScans, type ActiveScan } from "@/lib/active-scan";
 
 export async function POST(req: Request) {
-  const { targetUrl, sourcePath, config, scanId: existingScanId } = (await req.json()) as {
+  const { targetUrl, sourcePath, config, scanId: existingScanId, type = "PENTEST" } = (await req.json()) as {
     targetUrl: string;
     sourcePath: string;
     config: string;
     scanId?: string;
+    type?: string;
   };
 
   // No longer blocking concurrent scans. Removed previous process check.
@@ -37,8 +37,8 @@ export async function POST(req: Request) {
     }
   }
 
-  const scanId = existingScanId || `SCAN-${new Date().getTime()}`;
-  const configPath = `configs/${config}`;
+  const scanId = existingScanId || (type === "SCA" ? `SCA-${new Date().getTime()}` : `SCAN-${new Date().getTime()}`);
+  const configPath = type === "SCA" ? config : `configs/${config}`;
 
   // Log preloading: Split into lines to maintain shifting logic
   let preloadedLogs: string[] = [];
@@ -51,6 +51,7 @@ export async function POST(req: Request) {
 
   const scanData: ActiveScan = {
     id: scanId,
+    type,
     target: targetUrl,
     status: "running" as const,
     startTime: existingStartTime,
@@ -96,6 +97,7 @@ export async function POST(req: Request) {
     await prisma.scan.create({
       data: {
         id: scanId,
+        type,
         targetUrl,
         sourcePath,
         config,
@@ -107,16 +109,19 @@ export async function POST(req: Request) {
   }
 
   const engineDir = process.env.ENGINE_DIR || "/home/ubuntu/dokodemodoor";
+  const STORE_PATH = process.env.STORE_PATH || `${engineDir}/.dokodemodoor-store.json`;
+  const script = type === "SCA" ? "./osv-scanner.mjs" : "./dokodemodoor.mjs";
+  const scriptArgs = type === "SCA"
+    ? [targetUrl, sourcePath, configPath]
+    : [targetUrl, sourcePath, "--config", configPath];
+
   const proc = spawn("npx", [
     "zx",
-    "./dokodemodoor.mjs",
-    targetUrl,
-    sourcePath,
-    "--config",
-    configPath
+    script,
+    ...scriptArgs
   ], {
     cwd: engineDir,
-    env: { ...process.env, FORCE_COLOR: "3" },
+    env: { ...process.env, FORCE_COLOR: "3", DOKODEMODOOR_STORE: STORE_PATH },
     detached: true, // Allow killing the entire process group
   });
 
@@ -251,10 +256,12 @@ export async function GET(req: Request) {
   const limit = parseInt(searchParams.get("limit") || "10");
   const query = searchParams.get("query") || "";
   const status = searchParams.get("status") || "all";
+  const type = searchParams.get("type") || "PENTEST";
 
   const skip = (page - 1) * limit;
 
-  const where: Prisma.ScanWhereInput = {};
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const where: any = {};
   if (query) {
     const matchingProjects = await prisma.project.findMany({
       where: { name: { contains: query } },
@@ -271,36 +278,80 @@ export async function GET(req: Request) {
   if (status !== "all") {
     where.status = status;
   }
+  where.type = type;
 
-  const [history, total, projects, stats] = await Promise.all([
-    prisma.scan.findMany({
-      where,
-      orderBy: { startTime: "desc" },
-      skip,
-      take: limit,
-      select: {
-        id: true,
-        targetUrl: true,
-        status: true,
-        startTime: true,
-        endTime: true,
-        duration: true,
-        vulnerabilities: true,
-        sourcePath: true,
-        config: true,
-      }
-    }),
-    prisma.scan.count({ where }),
-    prisma.project.findMany({
-      select: { localPath: true, name: true }
-    }),
-    prisma.scan.groupBy({
-      by: ['status'],
-      _count: {
-        id: true
-      }
-    })
-  ]);
+  let history, total, projects, stats;
+  try {
+    [history, total, projects, stats] = await Promise.all([
+      prisma.scan.findMany({
+        where: where as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+        orderBy: { startTime: "desc" },
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          targetUrl: true,
+          status: true,
+          startTime: true,
+          endTime: true,
+          duration: true,
+          vulnerabilities: true,
+          sourcePath: true,
+          config: true,
+        }
+      }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      prisma.scan.count({ where: where as any }),
+      prisma.project.findMany({
+        select: { localPath: true, name: true }
+      }),
+      prisma.scan.groupBy({
+        by: ['status'],
+        where: where as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+        _count: {
+          id: true
+        }
+      })
+    ]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (err: any) {
+    console.error("Prisma query failed, likely due to schema mismatch. Retrying without 'type' filter.", err.message);
+    const fallbackWhere = { ...where };
+    delete fallbackWhere.type;
+
+    [history, total, projects, stats] = await Promise.all([
+      prisma.scan.findMany({
+        where: fallbackWhere as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+        orderBy: { startTime: "desc" },
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          targetUrl: true,
+          status: true,
+          startTime: true,
+          endTime: true,
+          duration: true,
+          vulnerabilities: true,
+          sourcePath: true,
+          config: true,
+        }
+      }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      prisma.scan.count({ where: fallbackWhere as any }),
+      prisma.project.findMany({
+        select: { localPath: true, name: true }
+      }),
+      prisma.scan.groupBy({
+        by: ['status'],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        where: fallbackWhere as any,
+        _count: {
+          id: true
+        }
+      })
+    ]);
+  }
 
   const projectMap = new Map(projects.map(p => [p.localPath, p.name]));
   const historyWithProjectName = history.map(scan => ({
@@ -309,19 +360,27 @@ export async function GET(req: Request) {
   }));
 
   const counts = {
-    total: stats.reduce((acc, curr) => acc + curr._count.id, 0),
-    running: stats.find(s => s.status === 'running')?._count.id || 0,
-    translating: stats.find(s => s.status === 'translating')?._count.id || 0,
-    completed: stats.find(s => s.status === 'completed')?._count.id || 0,
-    failed: stats.find(s => s.status === 'failed')?._count.id || 0,
+    total: stats.reduce((acc, curr) => acc + (curr._count?.id || 0), 0),
+    running: stats.find(s => s.status === 'running')?._count?.id || 0,
+    translating: stats.find(s => s.status === 'translating')?._count?.id || 0,
+    completed: stats.find(s => s.status === 'completed')?._count?.id || 0,
+    failed: stats.find(s => s.status === 'failed')?._count?.id || 0,
   };
 
-  const actives = getAllActiveScans();
+  const actives = getAllActiveScans().filter(s => (s.type || "PENTEST") === type);
   return NextResponse.json({
     active: actives.length > 0 ? {
-      ...actives[0], // Keep basic compatibility for single active view if needed, or return list
+      id: actives[0].id,
+      type: actives[0].type || "PENTEST",
+      target: actives[0].target,
+      status: actives[0].status,
+      startTime: actives[0].startTime,
       vulnerabilities: actives[0].vulnerabilities || 0,
-      logs: undefined,
+      sourcePath: actives[0].sourcePath,
+      targetUrl: actives[0].targetUrl,
+      config: actives[0].config,
+      sessionId: actives[0].sessionId,
+      duration: actives[0].duration,
       projectName: actives[0].sourcePath ? projectMap.get(actives[0].sourcePath) : null
     } : null,
     history: historyWithProjectName,

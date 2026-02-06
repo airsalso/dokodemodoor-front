@@ -28,9 +28,18 @@ export async function GET(req: Request) {
     }
 
     const files = fs.readdirSync(configsDir);
-    const yamlFiles = files.filter(f => f.endsWith(".yaml") || f.endsWith(".yml"));
+    const type = searchParams.get("type") || "yaml";
 
-    return NextResponse.json({ configs: yamlFiles });
+    let filteredFiles;
+    if (type === "json") {
+      filteredFiles = files.filter(f => f.endsWith(".json"));
+    } else if (type === "txt") {
+      filteredFiles = files.filter(f => f.endsWith(".txt"));
+    } else {
+      filteredFiles = files.filter(f => f.endsWith(".yaml") || f.endsWith(".yml"));
+    }
+
+    return NextResponse.json({ configs: filteredFiles });
   } catch (error) {
     console.error("Error reading configs:", error);
     return NextResponse.json({ configs: [] }, { status: 500 });
@@ -55,8 +64,13 @@ export async function POST(req: Request) {
       fs.mkdirSync(configsDir, { recursive: true });
     }
 
-    // Ensure the filename ends with .yaml
-    const filename = name.endsWith(".yaml") || name.endsWith(".yml") ? name : `${name}.yaml`;
+    // Ensure the filename ends with correct extension
+    let filename = name;
+    if (content.trim().startsWith("{")) {
+       filename = name.endsWith(".json") ? name : `${name}.json`;
+    } else {
+       filename = name.endsWith(".yaml") || name.endsWith(".yml") ? name : `${name}.yaml`;
+    }
     const fullPath = path.join(configsDir, filename);
 
     // Security check: Ensure the path is within the configs directory

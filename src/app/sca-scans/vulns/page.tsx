@@ -62,7 +62,7 @@ export default function VulnerabilitiesPage() {
 
     useEffect(() => {
         if (!authLoading && !authenticated) {
-            router.push(`/login?callback=/scans/vulns`);
+            router.push(`/login?callback=/sca-scans/vulns`);
         }
     }, [router, authenticated, authLoading]);
 
@@ -70,7 +70,7 @@ export default function VulnerabilitiesPage() {
     const { data: scanData } = useScanDetail(scanId || "");
     const [filterSeverity, setFilterSeverity] = useState<string>(searchParams.get("severity") || "ALL");
 
-    const { data: vulnData, isLoading: vulnsLoading } = useVulns(scanId, filterSeverity);
+    const { data: vulnData, isLoading: vulnsLoading } = useVulns(scanId, filterSeverity, "SCA");
 
     const vulns = useMemo(() => vulnData?.vulnerabilities || [], [vulnData]);
     const severitySummary = vulnData?.summary || {};
@@ -169,9 +169,9 @@ export default function VulnerabilitiesPage() {
                 <header className="mb-12 flex flex-col md:flex-row md:items-start justify-between gap-6">
                     <div className="flex items-start gap-6 flex-1">
                         <Link
-                            href={scanId ? `/scans/${scanId}` : "/scans"}
+                            href={scanId ? `/sca-scans/${scanId}` : "/sca-scans"}
                             className="mt-1 group p-4 bg-rose-500/5 border border-rose-500/20 rounded-2xl text-rose-400 hover:text-white hover:bg-rose-500/20 hover:border-rose-500/40 transition-all active:scale-95 shadow-lg shadow-rose-500/5 hover:shadow-rose-500/10"
-                            title={scanId ? "Back to Scan Detail" : "Back to History"}
+                            title={scanId ? "Back to SCA Scan Detail" : "Back to History"}
                         >
                             <ChevronLeft className="w-7 h-7 transition-transform group-hover:-translate-x-1" />
                         </Link>
@@ -181,7 +181,7 @@ export default function VulnerabilitiesPage() {
                                 <span className="text-xs font-black uppercase tracking-[0.3em]">Security Center</span>
                             </div>
                             <h1 className="text-4xl font-black text-white">
-                                {scanData?.projectName || scanId || (searchParams.get("type") === "SCA" ? "SCA Findings" : "Vulnerability Findings")}
+                                {scanData?.projectName || scanId || "SCA Findings"}
                             </h1>
                             <p className="text-gray-500 max-w-xl">
                                 Consolidated security findings from all automated assessments.
@@ -569,7 +569,7 @@ const VulnCard = ({ vuln, getSeverityBadge, onView }: VulnCardProps) => {
                             <div className="flex items-center gap-2 text-sm font-mono text-gray-400">
                                 <Hash className="w-3.5 h-3.5 text-primary/50 flex-shrink-0" />
                                 <Link
-                                    href={`/scans/${vuln.scanId}`}
+                                    href={`/sca-scans/${vuln.scanId}`}
                                     onClick={(e) => e.stopPropagation()}
                                     className="truncate hover:text-primary hover:underline transition-colors"
                                 >

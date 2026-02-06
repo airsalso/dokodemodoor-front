@@ -118,7 +118,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
       const proc = spawn("npx", ["zx", command, ...args], {
         cwd: ENGINE_DIR,
-        env: { ...process.env, FORCE_COLOR: "3" },
+        env: { ...process.env, FORCE_COLOR: "3", DOKODEMODOOR_STORE: STORE_PATH },
         detached: true
       });
 
@@ -163,7 +163,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       // Handle Rollback with simple Exec (Sync-ish)
       const command = `npx zx ./dokodemodoor.mjs --rollback-to ${agentSlug} --session ${sessionId}`;
       console.log(`Executing Agent Rollback: ${command}`);
-      const { stdout, stderr } = await execPromise(command, { cwd: ENGINE_DIR });
+      const { stdout, stderr } = await execPromise(command, {
+        cwd: ENGINE_DIR,
+        env: { ...process.env, DOKODEMODOOR_STORE: STORE_PATH }
+      });
 
       // After successful rollback, update findings
       const vulnCount = await processScanFindings(id, sourcePath);

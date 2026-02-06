@@ -13,7 +13,9 @@ export const VULN_TYPE_ORDER = [
   'auth',
   'authz',
   'pathi',
-  'xss'
+  'xss',
+  'api-fuzzer',
+  'login-check'
 ];
 
 export const SEVERITY_MAP: Record<string, string> = {
@@ -25,12 +27,17 @@ export const SEVERITY_MAP: Record<string, string> = {
   'authz': 'HIGH',
   'pathi': 'MEDIUM',
   'xss': 'MEDIUM',
+  'api-fuzzer': 'MEDIUM',
+  'login-check': 'HIGH',
 };
 
 export const processScanFindings = async (scanId: string, sourcePath: string | null | undefined) => {
   if (!sourcePath) return 0;
 
   try {
+    const scan = await prisma.scan.findUnique({ where: { id: scanId }, select: { type: true } });
+    const scanType = scan?.type || "PENTEST";
+
     const deliverablesPath = path.join(sourcePath, "deliverables");
     if (!fs.existsSync(deliverablesPath)) {
       // Return existing count if folder doesn't exist (e.g. failed before creating findings)
@@ -38,8 +45,21 @@ export const processScanFindings = async (scanId: string, sourcePath: string | n
     }
 
     const files = fs.readdirSync(deliverablesPath);
-    const jsonFiles = files.filter(f => f.endsWith(".json"));
-    console.log(`[Findings] Processing ${jsonFiles.length} files in ${deliverablesPath}`);
+    let jsonFiles = files.filter(f => f.endsWith(".json"));
+
+    // Filter findings based on scan type to avoid cross-pollution in shared folders
+    if (scanType === "SCA") {
+      jsonFiles = jsonFiles.filter(f => f.startsWith("osv-") || f.startsWith("osv_"));
+    } else {
+      // Pentest scan: only process standard pentest types
+      const pentestTypes = [...VULN_TYPE_ORDER, "recon"];
+      jsonFiles = jsonFiles.filter(f => {
+        const name = f.replace(".json", "").replace("_exploitation_queue", "");
+        return pentestTypes.some(t => name === t);
+      });
+    }
+
+    console.log(`[Findings] Processing ${jsonFiles.length} files (type: ${scanType}) in ${deliverablesPath}`);
 
     for (const file of jsonFiles) {
       const typeKey = file.includes("_exploitation_queue.json")
@@ -50,22 +70,58 @@ export const processScanFindings = async (scanId: string, sourcePath: string | n
 
       try {
         const content = fs.readFileSync(path.join(deliverablesPath, file), "utf8");
-        const json = JSON.parse(content);
-        const findings = Array.isArray(json) ? json : (json.vulnerabilities || json.findings || []);
+        let json: unknown;
+        try {
+          json = JSON.parse(content);
+        } catch (parseErr) {
+          // Attempt to fix common LLM JSON errors: literal newlines in strings
+          // This is a very basic fix: replace literal newlines with \n
+          // (Only if they are not followed by a quote or something that looks like the end of a field)
+          const fixedContent = content.replace(/\n(?=[^"]*"[^"]*(?:"[^"]*"[^"]*)*$)/g, "\\n");
+          try {
+            json = JSON.parse(fixedContent);
+            console.log(`[Findings] Recovered from JSON parse error in ${file} using cleanup.`);
+          } catch {
+            console.error(`[Findings] Failed to parse JSON in ${file} even after cleanup: ${parseErr}`);
+            continue;
+          }
+        }
 
-        if (Array.isArray(findings)) {
+        const findings = (() => {
+          if (Array.isArray(json)) return json;
+          if (json && typeof json === 'object') {
+            const obj = json as Record<string, unknown>;
+            if (Array.isArray(obj.vulnerabilities)) return obj.vulnerabilities;
+            if (Array.isArray(obj.findings)) return obj.findings;
+          }
+          return [];
+        })() as Record<string, unknown>[];
+
+        if (findings.length > 0) {
           console.log(`[Findings] File ${file}: ${findings.length} findings found.`);
           for (const v of findings) {
             // 1. Determine a stable 'Title'
-            // If engine provides a specific ID (e.g. AUTH-VULN-01), use it to ensure uniqueness
-            const baseTitle = v.title || v.type || v.vulnerability_type || `${typeKey.toUpperCase()} Found`;
-            const findingId = v.ID || v.vulnerability_id || v.id;
+            const baseTitle = (typeof v.title === 'string' ? v.title : '') ||
+                             (typeof v.type === 'string' ? v.type : '') ||
+                             (typeof v.vulnerability_type === 'string' ? v.vulnerability_type : '') ||
+                             `${typeKey.toUpperCase()} Found`;
+
+            const findingId = (typeof v.ID === 'string' ? v.ID : '') ||
+                             (typeof v.vulnerability_id === 'string' ? v.vulnerability_id : '') ||
+                             (typeof v.id === 'string' ? v.id : '');
+
             const title = findingId ? `[${findingId}] ${baseTitle}` : baseTitle;
 
             // 2. Determine Evidence/Location
-            const evidence = v.evidence || v.proof || v.poc || v.vulnerable_code_location || v.source_endpoint || v.endpoint || v.source || v.path || v.witness_payload || "";
-            const description = v.description || v.details || v.notes || "";
-            const severity = (v.severity || (v.confidence === 'high' ? 'HIGH' : mappedSeverity)).toUpperCase();
+            const rawEvidence = v.evidence || v.proof || v.poc || v.vulnerable_code_location || v.source_endpoint || v.endpoint || v.source || v.path || v.witness_payload || "";
+            const evidence = typeof rawEvidence === 'string' ? rawEvidence : JSON.stringify(rawEvidence, null, 2);
+
+            const rawDescription = v.description || v.details || v.notes || "";
+            const description = typeof rawDescription === 'string' ? rawDescription : JSON.stringify(rawDescription, null, 2);
+
+            const vSeverity = typeof v.severity === 'string' ? v.severity : '';
+            const vConfidence = typeof v.confidence === 'string' ? v.confidence : '';
+            const severity = (vSeverity || (vConfidence === 'high' ? 'HIGH' : mappedSeverity)).toUpperCase();
 
             // 3. Identification & Deduplication
             // We search for an existing finding with the SAME scanId, type, and title.
@@ -139,6 +195,9 @@ export const captureScanReports = async (scanId: string, sourcePath: string | nu
   if (!sourcePath) return;
 
   try {
+    const scan = await prisma.scan.findUnique({ where: { id: scanId }, select: { type: true } });
+    const scanType = scan?.type || "PENTEST";
+
     const deliverablesPath = path.join(sourcePath, "deliverables");
     if (!fs.existsSync(deliverablesPath)) return;
 
@@ -148,16 +207,26 @@ export const captureScanReports = async (scanId: string, sourcePath: string | nu
       if (!entry.isFile()) continue;
 
       const filename = entry.name;
+
+      // Filter based on scan type
+      if (scanType === "SCA") {
+        if (!filename.startsWith("osv-") && !filename.startsWith("osv_")) continue;
+      } else {
+        if (filename.startsWith("osv-") || filename.startsWith("osv_")) continue;
+        // Also skip some temp/internal files for Pentest archive if needed
+        if (filename.includes("exploitation_queue")) continue;
+      }
+
+      const ext = filename.split('.').pop()?.toLowerCase();
+      if (!["md", "txt", "json"].includes(ext || "")) continue;
+
       const fullPath = path.join(deliverablesPath, filename);
       const content = fs.readFileSync(fullPath, "utf-8");
-      const type = filename.split('.').pop() || "txt";
+      const type = ext || "txt";
 
       // Save or update (though usually it's only called once at end)
       await prisma.scanReport.upsert({
         where: {
-          // Since we don't have a unique constraint on filename+scanId in schema.prisma,
-          // we'll just try to find it first or use a compound key if we added one.
-          // For now, let's just create. In most cases, it will be fine.
           id: `${scanId}-${filename}`
         },
         update: {

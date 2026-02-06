@@ -3,157 +3,181 @@
 import { Navbar } from "@/components/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-    Settings, Plus, Search, Trash2, Loader2,
-    FileCode, Calendar, ChevronLeft, ChevronRight,
-    CheckCircle2, AlertCircle, X, Edit2
+    Search, Trash2, Loader2,
+    Calendar, ChevronLeft, ChevronRight,
+    CheckCircle2, AlertCircle, X, FileSearch, BarChart3
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import { FileText } from "lucide-react";
+import { AnalysisViewModal } from "@/components/AnalysisViewModal";
+import { AnalyzerRunModal } from "@/components/AnalyzerRunModal";
 import { DocumentationModal } from "@/components/DocumentationModal";
-import { ProfileCreateModal } from "@/components/ProfileCreateModal";
 
-export default function ProfilesPage() {
+export default function AnalyzerPage() {
     const router = useRouter();
     const { t } = useLanguage();
 
     const [loading, setLoading] = useState(true);
-    const [configs, setConfigs] = useState<string[]>([]);
+    const [results, setResults] = useState<string[]>([]);
     const [search, setSearch] = useState("");
 
     // Modal States
-    const [showAddModal, setShowAddModal] = useState(false);
-    const [editingProfile, setEditingProfile] = useState<{name: string, content: string} | undefined>(undefined);
-    const [isEditing, setIsEditing] = useState(false);
-    const [actionLoading, setActionLoading] = useState(false);
+    const [showRunModal, setShowRunModal] = useState(false);
+
+    // Help/Documentation State
+    const [showHelpModal, setShowHelpModal] = useState(false);
+    const [helpContent, setHelpContent] = useState("");
+    const [helpLoading, setHelpLoading] = useState(false);
+
+    // Analysis View State
+    const [showViewModal, setShowViewModal] = useState(false);
+    const [viewingResult, setViewingResult] = useState<{name: string, content: string} | null>(null);
+    const [resultContent, setResultContent] = useState("");
+    const [resultLoading, setResultLoading] = useState(false);
 
     // UI Feedback
     const [success, setSuccess] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    // Documentation State
-    const [showDocsModal, setShowDocsModal] = useState(false);
-    const [docContent, setDocContent] = useState("");
-    const [docsLoading, setDocsLoading] = useState(false);
-
-    const fetchConfigs = useCallback(async () => {
+    // This is currently a placeholder logic, as the backend is not yet implemented.
+    const fetchResults = useCallback(async () => {
         try {
             setLoading(true);
-            const res = await fetch("/api/configs");
+            const res = await fetch("/api/configs?type=txt");
             if (res.status === 401) {
-                router.push("/login?callback=/projects/profiles");
+                router.push("/login?callback=/projects/analyzer");
                 return;
             }
             const data = await res.json();
-            setConfigs(data.configs || []);
+            setResults(data.configs || []);
         } catch (err) {
-            console.error("Failed to load profiles:", err);
-            setError("Failed to load profiles.");
+            console.error("Failed to load results:", err);
+            setError("Failed to load analysis results.");
         } finally {
             setLoading(false);
         }
     }, [router]);
 
     useEffect(() => {
-        fetchConfigs();
-    }, [fetchConfigs]);
+        fetchResults();
+    }, [fetchResults]);
 
     const fetchDocs = async () => {
-        if (docContent) {
-            setShowDocsModal(true);
+        if (helpContent) {
+            setShowHelpModal(true);
             return;
         }
-        setDocsLoading(true);
-        setShowDocsModal(true);
+        setHelpLoading(true);
+        setShowHelpModal(true);
         try {
-            const res = await fetch("/api/docs/profile-generator");
+            const res = await fetch("/api/docs/project-analyzer");
             const data = await res.json();
             if (data.content) {
-                setDocContent(data.content);
+                setHelpContent(data.content);
             } else {
-                setDocContent("Failed to load documentation.");
+                setHelpContent("Failed to load documentation.");
             }
         } catch (err) {
             console.error("Failed to fetch docs:", err);
-            setDocContent("Error loading documentation.");
+            setHelpContent("Error loading documentation.");
         } finally {
-            setDocsLoading(false);
+            setHelpLoading(false);
         }
     };
 
-    const handleSaveConfig = async (filename?: string) => {
-        setSuccess(`Profile "${filename}" updated/generated successfully.`);
-        fetchConfigs();
+    const handleStartAnalysis = (project: { name: string; path: string }) => {
+        setSuccess(`Analysis started for project "${project.name}". The report will appear in the list shortly.`);
+
+        // Refresh after 5 seconds to give the analyzer time to create the file
+        setTimeout(() => {
+            fetchResults();
+        }, 5000);
     };
 
-    const handleEditConfig = async (filename: string) => {
-        setActionLoading(true);
-        setError(null);
+    const handleViewResult = async (filename: string) => {
+        setResultLoading(true);
+        setShowViewModal(true);
         try {
             const res = await fetch(`/api/configs?filename=${encodeURIComponent(filename)}`);
             const data = await res.json();
             if (res.ok) {
-                setEditingProfile({
+                setViewingResult({
                     name: filename,
                     content: data.content
                 });
-                setIsEditing(true);
-                setShowAddModal(true);
+                setResultContent(data.content);
             } else {
-                setError(data.error || "Failed to load profile content.");
+                setError(data.error || "Failed to load result content.");
+                setShowViewModal(false);
             }
         } catch (err) {
-            console.error("Load profile error:", err);
+            console.error("Load result error:", err);
             setError("Connection error.");
+            setShowViewModal(false);
         } finally {
-            setActionLoading(false);
+            setResultLoading(false);
         }
     };
 
-    const handleOpenAddModal = () => {
-        setEditingProfile(undefined);
-        setIsEditing(false);
-        setShowAddModal(true);
+    const handleSaveResult = async (newContent: string) => {
+        if (!viewingResult) return;
+        try {
+            const res = await fetch("/api/configs", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: viewingResult.name,
+                    content: newContent
+                }),
+            });
+            if (res.ok) {
+                setViewingResult({
+                    ...viewingResult,
+                    content: newContent
+                });
+                setResultContent(newContent);
+                setSuccess(`Analysis result "${viewingResult.name}" updated.`);
+            } else {
+                const data = await res.json();
+                setError(data.error || "Failed to save changes.");
+            }
+        } catch (err) {
+            console.error("Save result error:", err);
+            setError("Connection error.");
+        }
     };
 
-    const handleCloseModal = () => {
-        setShowAddModal(false);
-        setIsEditing(false);
-    };
+    const handleDeleteResult = async (filename: string) => {
+        if (!confirm(`Are you sure you want to delete analysis result "${filename}"?`)) return;
 
-    const handleDeleteConfig = async (filename: string) => {
-        if (!confirm(`Are you sure you want to delete profile "${filename}"?`)) return;
-
-        setActionLoading(true);
         try {
             const res = await fetch(`/api/configs?filename=${encodeURIComponent(filename)}`, {
                 method: "DELETE",
             });
 
             if (res.ok) {
-                setSuccess(`Profile "${filename}" deleted.`);
-                fetchConfigs();
+                setSuccess(`Analysis result "${filename}" deleted.`);
+                fetchResults();
             } else {
                 const data = await res.json();
                 setError(data.error || "Deletion failed.");
             }
         } catch (err) {
-            console.error("Delete profile error:", err);
+            console.error("Delete result error:", err);
             setError("Connection error.");
-        } finally {
-            setActionLoading(false);
         }
     };
 
-    const filteredConfigs = configs.filter(c =>
-        c.toLowerCase().includes(search.toLowerCase())
+    const filteredResults = results.filter(r =>
+        r.toLowerCase().includes(search.toLowerCase())
     );
 
     const ITEMS_PER_PAGE = 7;
     const [currentPage, setCurrentPage] = useState(1);
-    const totalPages = Math.ceil(filteredConfigs.length / ITEMS_PER_PAGE);
-    const paginatedConfigs = filteredConfigs.slice(
+    const totalPages = Math.ceil(filteredResults.length / ITEMS_PER_PAGE);
+    const paginatedResults = filteredResults.slice(
         (currentPage - 1) * ITEMS_PER_PAGE,
         currentPage * ITEMS_PER_PAGE
     );
@@ -169,12 +193,12 @@ export default function ProfilesPage() {
                 <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
                     <div className="space-y-2">
                         <div className="flex items-center gap-3 text-primary">
-                            <Settings className="w-6 h-6" />
-                            <span className="text-xs font-black uppercase tracking-[0.3em]">{t("project_profiles")}</span>
+                            <BarChart3 className="w-6 h-6" />
+                            <span className="text-xs font-black uppercase tracking-[0.3em]">{t("project_analyzer") || "Project Analyzer"}</span>
                         </div>
-                        <h1 className="text-4xl font-black text-white">{t("project_profiles")}</h1>
+                        <h1 className="text-4xl font-black text-white">{t("project_analyzer") || "Project Analyzer"}</h1>
                         <p className="text-gray-500 max-w-xl">
-                            {t("config_desc")}
+                            {t("analyzer_desc") || "Deeply analyze your project source code for security patterns and structural enhancements."}
                         </p>
                     </div>
 
@@ -183,7 +207,7 @@ export default function ProfilesPage() {
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
                             <input
                                 type="text"
-                                placeholder="Search profiles..."
+                                placeholder="Search results..."
                                 className="w-full bg-input-bg border border-white/10 rounded-xl pl-12 pr-4 py-4 text-base transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground shadow-inner font-medium"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
@@ -198,11 +222,11 @@ export default function ProfilesPage() {
                                 <FileText className="w-6 h-6" />
                             </button>
                             <button
-                                onClick={handleOpenAddModal}
+                                onClick={() => setShowRunModal(true)}
                                 className="w-full md:w-auto px-10 py-4 btn-accent rounded-2xl font-black flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all whitespace-nowrap"
                             >
-                                <Plus className="w-5 h-5" />
-                                {t("create_config")}
+                                <FileSearch className="w-5 h-5" />
+                                {t("run_analyzer") || "Run Analyzer"}
                             </button>
                         </div>
                     </div>
@@ -239,35 +263,34 @@ export default function ProfilesPage() {
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-40 gap-4">
                             <Loader2 className="w-10 h-10 text-primary animate-spin" />
-                            <p className="text-sm font-bold text-gray-500 animate-pulse uppercase tracking-[0.2em]">Loading Profiles...</p>
+                            <p className="text-sm font-bold text-gray-500 animate-pulse uppercase tracking-[0.2em]">Analyzing Project...</p>
                         </div>
                     ) : (
                         <>
                             <div className="grid gap-4">
                                 <AnimatePresence mode="popLayout">
-                                    {paginatedConfigs.map((filename) => (
-                                        <ProfileCard
+                                    {paginatedResults.map((filename) => (
+                                        <AnalysisCard
                                             key={filename}
                                             filename={filename}
-                                            onEdit={() => handleEditConfig(filename)}
-                                            onDelete={() => handleDeleteConfig(filename)}
-                                            actionLoading={actionLoading}
+                                            onView={() => handleViewResult(filename)}
+                                            onDelete={() => handleDeleteResult(filename)}
                                         />
                                     ))}
                                 </AnimatePresence>
 
-                                {filteredConfigs.length === 0 && (
+                                {filteredResults.length === 0 && (
                                     <div className="py-24 text-center glass-card border-dashed border-white/10 rounded-2xl">
                                         <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
-                                            <FileCode className="w-8 h-8 text-gray-600" />
+                                            <BarChart3 className="w-8 h-8 text-gray-600" />
                                         </div>
-                                        <p className="text-gray-400 font-bold text-lg">No profiles found.</p>
-                                        <p className="text-sm text-gray-600 mt-2">Create a new profile to get started.</p>
+                                        <p className="text-gray-400 font-bold text-lg">No analysis results found.</p>
+                                        <p className="text-sm text-gray-600 mt-2">Start a new analysis to see results here.</p>
                                     </div>
                                 )}
                             </div>
 
-                            {totalPages >= 1 && filteredConfigs.length > 0 && (
+                            {totalPages >= 1 && filteredResults.length > 0 && (
                                 <div className="mt-12 flex items-center justify-center gap-4">
                                     <button
                                         onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
@@ -307,20 +330,31 @@ export default function ProfilesPage() {
                 </div>
             </div>
 
-            <ProfileCreateModal
-                isOpen={showAddModal}
-                onClose={handleCloseModal}
-                onSuccess={handleSaveConfig}
-                initialData={editingProfile}
-                isEditing={isEditing}
+            <AnalyzerRunModal
+                isOpen={showRunModal}
+                onClose={() => setShowRunModal(false)}
+                onStart={handleStartAnalysis}
+            />
+
+            <AnalysisViewModal
+                isOpen={showViewModal}
+                onClose={() => {
+                    setShowViewModal(false);
+                    setViewingResult(null);
+                    setResultContent("");
+                }}
+                title={viewingResult ? viewingResult.name.replace('.txt', '') : "Project Analyzer"}
+                content={resultContent}
+                isLoading={resultLoading}
+                onSave={handleSaveResult}
             />
 
             <DocumentationModal
-                isOpen={showDocsModal}
-                onClose={() => setShowDocsModal(false)}
-                title="Profile Generator Guide"
-                content={docContent}
-                isLoading={docsLoading}
+                isOpen={showHelpModal}
+                onClose={() => setShowHelpModal(false)}
+                title="Project Analyzer Manual"
+                content={helpContent}
+                isLoading={helpLoading}
             />
 
             <style jsx global>{`
@@ -332,53 +366,50 @@ export default function ProfilesPage() {
     );
 }
 
-type ProfileCardProps = {
+type AnalysisCardProps = {
     filename: string;
-    onEdit: () => void;
+    onView: () => void;
     onDelete: () => void;
-    actionLoading: boolean;
 };
 
-const ProfileCard = ({ filename, onEdit, onDelete, actionLoading }: ProfileCardProps) => {
-    const displayName = filename.replace('.yaml', '').replace('.yml', '');
+const AnalysisCard = ({ filename, onView, onDelete }: AnalysisCardProps) => {
+    const displayName = filename.replace('.txt', '');
 
     return (
         <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.98 }}
-            onClick={onEdit}
+            onClick={onView}
             className="glass-card p-6 border-white/5 hover:border-primary/30 transition-all hover:bg-white/5 group cursor-pointer"
         >
             <div className="flex items-center justify-between gap-6">
                 <div className="flex items-center gap-4 flex-1 min-w-0">
                     <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/20 to-transparent border border-primary/20 flex items-center justify-center text-primary flex-shrink-0">
-                        <FileCode className="w-7 h-7" />
+                        <BarChart3 className="w-7 h-7" />
                     </div>
                     <div className="flex flex-col min-w-0">
                         <span className="font-black text-lg text-white mb-1 truncate">{displayName}</span>
                         <span className="text-[10px] text-gray-600 uppercase tracking-widest font-black flex items-center gap-1.5">
-                            <Calendar className="w-3 h-3 text-primary/50" /> YAML Configuration
+                            <Calendar className="w-3 h-3 text-primary/50" /> Text Report
                         </span>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-2 flex-shrink-0">
                     <button
-                        onClick={(e) => { e.stopPropagation(); onEdit(); }}
+                        onClick={(e) => { e.stopPropagation(); onView(); }}
                         className="p-3 rounded-xl bg-blue-500/10 text-blue-500 hover:text-white hover:bg-blue-500/90 transition-all border border-blue-500/20 hover:border-blue-500/50"
-                        title="Edit Profile"
-                        disabled={actionLoading}
+                        title="View Report"
                     >
-                        <Edit2 className="w-4 h-4" />
+                        <FileSearch className="w-4 h-4" />
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); onDelete(); }}
                         className="p-3 rounded-xl bg-rose-500/10 text-rose-500 hover:text-white hover:bg-rose-500/90 transition-all border border-rose-500/20 hover:border-rose-500/50"
-                        title="Delete Profile"
-                        disabled={actionLoading}
+                        title="Delete Result"
                     >
-                        {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                        <Trash2 className="w-4 h-4" />
                     </button>
                 </div>
             </div>

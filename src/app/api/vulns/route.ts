@@ -7,6 +7,7 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const scanId = searchParams.get("scanId");
   const severity = searchParams.get("severity");
+  const type = searchParams.get("type") || "PENTEST";
   const limit = parseInt(searchParams.get("limit") || "100");
 
   try {
@@ -21,6 +22,9 @@ export async function GET(req: Request) {
       where.severity = {
           equals: severity.toUpperCase()
       };
+    }
+    if (type) {
+      where.scan = { is: { type } };
     }
 
     const vulns = await prisma.vulnerability.findMany({
@@ -54,14 +58,17 @@ export async function GET(req: Request) {
     // Get summary counts for the current scope (all or specific scan)
     const summaryData = await prisma.vulnerability.groupBy({
       by: ['severity'],
-      where: scanId ? { scanId } : {},
+      where: {
+        ...(scanId ? { scanId } : {}),
+        scan: { is: { type } }
+      },
       _count: {
         _all: true
       }
     });
 
     const summary = summaryData.reduce((acc, curr) => {
-      acc[curr.severity] = curr._count._all;
+      acc[curr.severity] = curr._count?._all || 0;
       return acc;
     }, {} as Record<string, number>);
 

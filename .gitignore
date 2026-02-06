@@ -7,3 +7,4 @@ deliverables
 .DS_Store
 *.db
 *.db-journal
+tsconfig.tsbuildinfo

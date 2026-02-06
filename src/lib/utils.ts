@@ -10,3 +10,17 @@ export const hexToRgb = (hex: string) => {
     return "255, 255, 255";
   }
 };
+
+export const deriveProjectName = (urlOrPath: string, mode: 'git' | 'manual') => {
+  if (!urlOrPath) return "";
+  try {
+    if (mode === 'git') {
+      const cleanUrl = urlOrPath.trim().replace(/\/+$/, "");
+      const name = cleanUrl.replace(/\.git$/, "").split("/").pop();
+      return name || "";
+    } else {
+      const name = urlOrPath.replace(/[\\/]$/, "").split(/[\\/]/).pop();
+      return name || "";
+    }
+  } catch { return ""; }
+};

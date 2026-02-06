@@ -8,6 +8,8 @@ export interface ScanDetail {
   vulnerabilities: number;
   targetUrl?: string;
   sourcePath?: string;
+  projectName?: string | null;
+  type?: string;
   config?: string;
   sessionId?: string;
   startTime?: number;

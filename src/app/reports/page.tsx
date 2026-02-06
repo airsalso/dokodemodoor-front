@@ -24,7 +24,9 @@ import {
   SortAsc,
   SortDesc,
   Clock,
-  ArrowUpDown
+  ArrowUpDown,
+  Zap,
+  ArrowUpRight
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import ReactMarkdown from 'react-markdown';
@@ -362,6 +364,13 @@ export default function ReportsPage() {
   const [translatingPaths, setTranslatingPaths] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
   const deferredSearch = useDeferredValue(searchQuery);
+  const [latestScanId, setLatestScanId] = useState<string | null>(null);
+  const [projectDisplayName, setProjectDisplayName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const search = searchParams.get("search");
+    if (search) setSearchQuery(search);
+  }, [searchParams]);
 
   const [sortConfig, setSortConfig] = useState<SortConfig>({ field: 'name', order: 'asc' });
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, visible: boolean }>({ x: 0, y: 0, visible: false });
@@ -449,6 +458,20 @@ export default function ReportsPage() {
     };
 
     fetchFile();
+
+    // Fetch latest scan ID for this project
+    const projectName = selectedPath.split('/')[0];
+    const fetchLatestScan = async () => {
+      try {
+        const res = await fetch(`/api/scans/find-latest?projectName=${encodeURIComponent(projectName)}`);
+        const data = await res.json();
+        setLatestScanId(data.scanId);
+        setProjectDisplayName(data.projectDisplayName);
+      } catch (err) {
+        console.error("Fetch latest scan error:", err);
+      }
+    };
+    fetchLatestScan();
   }, [selectedPath]);
 
   const handleFileSelect = useCallback((path: string) => {
@@ -599,19 +622,22 @@ export default function ReportsPage() {
     const paths = new Set<string>();
     const searchLower = deferredSearch.toLowerCase();
 
-    const walk = (items: LogNode[], level: number) => {
+    const walk = (items: LogNode[], level: number, matchInherited = false) => {
       // Respect server-side sorting (mtime descending)
       items.forEach(node => {
         if (node.type === "file") paths.add(node.path);
 
-        const matches = !searchLower || node.name.toLowerCase().includes(searchLower) || (node.children && node.children.some(c => c.name.toLowerCase().includes(searchLower)));
+        const isSelfMatch = !searchLower || node.name.toLowerCase().includes(searchLower);
+        const hasMatchingChild = node.children && node.children.some(c => c.name.toLowerCase().includes(searchLower));
+        const matches = matchInherited || isSelfMatch || hasMatchingChild;
+
         if (!matches && node.type === 'file') return;
 
-        const isExpanded = expandedFolders.has(node.path) || (searchLower !== "" && node.type === "directory");
+        const isExpanded = !!(expandedFolders.has(node.path) || (searchLower !== "" && node.type === "directory" && (isSelfMatch || hasMatchingChild)));
         result.push({ node, level, isExpanded });
 
         if (node.type === "directory" && isExpanded && node.children) {
-          walk(node.children, level + 1);
+          walk(node.children, level + 1, matchInherited || isSelfMatch);
         }
       });
     };
@@ -664,6 +690,18 @@ export default function ReportsPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            {latestScanId && (
+              <Link
+                href={`/scans/${latestScanId}`}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all text-xs font-black uppercase tracking-widest border border-blue-500/20 shadow-lg"
+                title={projectDisplayName ? `Go to latest scan for ${projectDisplayName}` : "Go to Latest Scan Detail"}
+              >
+                <Zap className="w-4 h-4 fill-current" />
+                Latest Scan {projectDisplayName && <span className="text-[10px] opacity-70 ml-1">({projectDisplayName})</span>}
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </Link>
+            )}
+
             <button
               onClick={() => fetchList()}
               className="p-2.5 rounded-xl bg-white/5 border border-emerald-500/20 hover:bg-emerald-500/10 transition-all text-emerald-500 hover:text-emerald-400"

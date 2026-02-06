@@ -23,10 +23,11 @@ export interface VulnsResponse {
     summary: Record<string, number>;
 }
 
-export function useVulns(scanId: string | null, severity: string) {
+export function useVulns(scanId: string | null, severity: string, type: string = "PENTEST") {
     const params = new URLSearchParams();
     if (scanId) params.append("scanId", scanId);
     if (severity && severity !== "ALL") params.append("severity", severity);
+    if (type) params.append("type", type);
 
     const { data, error, mutate, isValidating } = useSWR<VulnsResponse>(
         `/api/vulns?${params.toString()}`,

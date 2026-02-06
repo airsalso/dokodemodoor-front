@@ -10,9 +10,20 @@ export async function GET(
 ) {
   const { id } = await params;
 
+  // Get project name if sourcePath exists
+  const getProjectName = async (path?: string | null) => {
+    if (!path) return null;
+    const project = await prisma.project.findFirst({
+      where: { localPath: path },
+      select: { name: true }
+    });
+    return project?.name || null;
+  };
+
   // Check memory for active scan
   const active = getActiveScan(id);
   if (active && active.id === id) {
+    const projectName = await getProjectName(active.sourcePath);
     return NextResponse.json({
       status: active.status,
       logs: active.logs,
@@ -22,8 +33,10 @@ export async function GET(
       duration: active.duration,
       targetUrl: active.targetUrl || active.target,
       sourcePath: active.sourcePath,
+      projectName,
       config: active.config,
       sessionId: active.sessionId,
+      type: active.type,
     });
   }
 
@@ -33,18 +46,27 @@ export async function GET(
   });
 
   if (historical) {
+    const [projectName, vulnCount] = await Promise.all([
+      getProjectName(historical.sourcePath),
+      prisma.vulnerability.count({ where: { scanId: id } })
+    ]);
+
     return NextResponse.json({
       status: historical.status,
-      logs: historical.logs ? [historical.logs] : [],
+      // Split by newline and keep the newline character in each element for XTerm
+      logs: historical.logs ? historical.logs.split(/(?<=\n)/) : [],
       target: historical.targetUrl,
-      vulnerabilities: historical.vulnerabilities,
+      vulnerabilities: vulnCount, // Use actual count from Vulnerability table
       startTime: historical.startTime.getTime(),
       endTime: historical.endTime?.getTime() || null,
       duration: historical.duration,
       targetUrl: historical.targetUrl,
       sourcePath: historical.sourcePath,
+      projectName,
       config: historical.config,
       sessionId: historical.sessionId,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      type: (historical as any).type,
     });
   }
 

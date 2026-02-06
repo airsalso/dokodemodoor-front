@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, History, Settings, PlayCircle, LogIn, LogOut, User as UserIcon, HelpCircle, Users, Terminal, Lock, FileBarChart, Briefcase, Shield } from "lucide-react";
+import { LayoutDashboard, History, Settings, PlayCircle, LogIn, LogOut, User as UserIcon, HelpCircle, Users, Terminal, Lock, FileBarChart, Briefcase, Shield, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Logo } from "@/components/Logo";
 import { useLanguage } from "@/context/LanguageContext";
@@ -31,6 +31,7 @@ export function Navbar() {
     { name: t("dashboard"), href: "/", icon: LayoutDashboard, color: "text-blue-400" },
     { name: t("about"), href: "/about", icon: HelpCircle, color: "text-purple-400" },
     { name: t("projects"), href: "/projects", icon: Briefcase, color: "text-amber-400" },
+    { name: t("sca_scans") || "SCA Scans", href: "/sca-scans", icon: Shield, color: "text-emerald-400" },
     { name: t("scans"), href: "/scans", icon: History, color: "text-rose-400" },
     { name: t("logs"), href: "/logs", icon: Terminal, color: "text-emerald-400" },
     { name: t("reports"), href: "/reports", icon: FileBarChart, color: "text-indigo-400" },
@@ -44,7 +45,8 @@ export function Navbar() {
 
   const isManagementActive = pathname.startsWith('/management');
   const isProjectsActive = pathname.startsWith('/projects');
-  const isScansActive = pathname.startsWith('/scans');
+  const isScaScansActive = pathname.startsWith('/sca-scans');
+  const isScansActive = pathname.startsWith('/scans') && !pathname.startsWith('/sca-scans');
 
   return (
     <div className="sticky top-0 z-50 w-full flex flex-col">
@@ -271,6 +273,15 @@ export function Navbar() {
                 <Settings className="w-3 h-3" />
                 {t("project_profiles")}
               </Link>
+              <Link
+                href="/projects/analyzer"
+                className={`text-[10px] uppercase font-black tracking-[0.2em] transition-colors flex items-center gap-2 h-full ${
+                  pathname.startsWith('/projects/analyzer') ? "text-primary border-b-2 border-primary" : "text-gray-500 hover:text-gray-300"
+                }`}
+              >
+                <Search className="w-3 h-3" />
+                {t("project analyzer") || "Project Analyzer"}
+              </Link>
             </div>
           </motion.div>
         )}
@@ -303,6 +314,39 @@ export function Navbar() {
               >
                 <Shield className="w-3 h-3" />
                 {t("vulnerabilities") || "Vulnerabilities"}
+              </Link>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Secondary Sub-Navbar for SCA Scans */}
+      <AnimatePresence>
+        {isScaScansActive && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="w-full bg-white/[0.02] border-b border-white/5 backdrop-blur-md overflow-hidden"
+          >
+            <div className="max-w-[1600px] mx-auto px-6 h-11 flex items-center justify-center gap-10">
+              <Link
+                href="/sca-scans"
+                className={`text-[10px] uppercase font-black tracking-[0.2em] transition-colors flex items-center gap-2 h-full ${
+                  pathname === '/sca-scans' ? "text-primary border-b-2 border-primary" : "text-gray-500 hover:text-gray-300"
+                }`}
+              >
+                <History className="w-3 h-3" />
+                {t("sca_history") || "SCA Scan History"}
+              </Link>
+              <Link
+                href="/sca-scans/vulns"
+                className={`text-[10px] uppercase font-black tracking-[0.2em] transition-colors flex items-center gap-2 h-full ${
+                  pathname.startsWith('/sca-scans/vulns') ? "text-primary border-b-2 border-primary" : "text-gray-500 hover:text-gray-300"
+                }`}
+              >
+                <Shield className="w-3 h-3" />
+                {t("sca_vulnerabilities") || "SCA Vulnerabilities"}
               </Link>
             </div>
           </motion.div>
