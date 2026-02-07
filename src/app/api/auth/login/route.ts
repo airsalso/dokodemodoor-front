@@ -134,12 +134,16 @@ export async function POST(req: Request) {
       console.debug(`[Login] Refresh token created for ${username}`);
     }
 
+    // Capture Client IP for context
+    const clientIp = forwarded ? forwarded.split(',')[0] : "127.0.0.1";
+
     return NextResponse.json({
       success: true,
       user: {
         id: user.id,
         username: user.username,
-        role: user.role || "USER"
+        role: user.role || "USER",
+        ip: clientIp
       }
     });
   } catch (error) {

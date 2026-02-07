@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { SignJWT } from "jose";
 import { prisma } from "@/lib/prisma";
 
@@ -95,12 +95,17 @@ export async function POST() {
       path: "/",
     });
 
+    // Capture Client IP for context
+    const forwardedHeaders = (await headers()).get("x-forwarded-for");
+    const clientIp = forwardedHeaders ? forwardedHeaders.split(',')[0] : "127.0.0.1";
+
     return NextResponse.json({
       success: true,
       user: {
         id: user.id,
         username: user.username,
-        role: user.role
+        role: user.role,
+        ip: clientIp
       }
     });
   } catch (error) {

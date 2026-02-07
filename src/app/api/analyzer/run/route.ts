@@ -21,6 +21,9 @@ export async function POST(req: Request) {
     console.log(`[Analyzer] Starting analysis for: ${projectPath}`);
 
     // Using spawn to run npm script
+    const command = "npm run project-analyzer -- " + projectPath;
+    console.log(`[Analyzer] Executing command: ${command}`);
+
     const proc = spawn("npm", ["run", "project-analyzer", "--", projectPath], {
       cwd: engineDir,
       env: { ...process.env, FORCE_COLOR: "0" },

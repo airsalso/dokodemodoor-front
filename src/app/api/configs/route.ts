@@ -20,7 +20,6 @@ export async function GET(req: Request) {
     targetDir = path.join(configsDir, folder);
   }
 
-  const allowedBase = baseDir; // Allow everything under /home/ubuntu/dokodemodoor
 
   try {
     if (!fs.existsSync(targetDir)) {

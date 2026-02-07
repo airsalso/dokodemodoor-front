@@ -15,12 +15,10 @@ import {
     Hash,
     Info,
     Eye,
-    Globe,
     Calendar,
     AlertCircle,
     AlertTriangle,
-    Layers,
-    ExternalLink
+    Layers
 } from "lucide-react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";

@@ -2,7 +2,7 @@
 
 import { Navbar } from "@/components/Navbar";
 import { motion } from "framer-motion";
-import { Globe, HardDrive, FileCode, Play, ChevronLeft, Loader2, AlertTriangle, Plus, X, Save, Github, FileText } from "lucide-react";
+import { HardDrive, FileCode, Play, ChevronLeft, Loader2, AlertTriangle, Plus, X, Save, Github, FileText } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
