@@ -158,6 +158,44 @@ const TreeItem = React.memo(({
     );
   }
 
+  const getFileStyle = (name: string) => {
+    // Green
+    if ([
+      "auth_session.json",
+      "code_analysis_deliverable.md",
+      "osv_analysis_deliverable.md",
+      "osv_exploitation_queue.json",
+      "pre_recon_deliverable.md",
+      "queue-merge.log",
+      "semgrep_analysis_deliverable.md"
+    ].includes(name)) {
+      return "text-emerald-400";
+    }
+
+    // Purple
+    if ([
+      "recon_deliverable.md",
+      "recon_verify_deliverable.md",
+      "api_fuzzer_deliverable.md"
+    ].includes(name)) {
+      return "text-purple-400";
+    }
+
+    // Orange: *_analysis_deliverable.md, *_exploitation_queue.json
+    if (name.endsWith("_analysis_deliverable.md") || name.endsWith("_exploitation_queue.json")) {
+      return "text-orange-400";
+    }
+
+    // Red: *_exploitation_evidence.json
+    if (name.endsWith("_exploitation_evidence.json")) {
+      return "text-rose-400";
+    }
+
+    return isSelected ? "text-white" : "text-gray-400 group-hover:text-gray-200";
+  };
+
+  const fileStyle = getFileStyle(node.name);
+
   return (
     <div key={node.path} className={`group flex items-center min-w-0 mb-0.5 relative transition-opacity ${isTranslating ? "opacity-60" : ""}`}>
       <button
@@ -165,9 +203,9 @@ const TreeItem = React.memo(({
         disabled={isTranslating}
         className={`flex-1 flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all duration-200 text-[13px] min-w-0 font-medium ${
           isSelected
-            ? "bg-emerald-500/20 text-white shadow-[inset_0_0_20px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/30"
-            : "text-gray-400 hover:bg-white/5 hover:text-gray-200"
-        }`}
+            ? "bg-emerald-500/20 shadow-[inset_0_0_20px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/30"
+            : "hover:bg-white/5"
+        } ${fileStyle}`}
         style={{ paddingLeft: `${level * 1.5 + 1.5}rem` }}
       >
         <FileCheck className={`w-4 h-4 shrink-0 transition-colors ${isSelected ? "text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" : "text-slate-600 group-hover:text-slate-400"}`} />
